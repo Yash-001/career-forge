@@ -6,10 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 4E — Onboarding Lifecycle Integration Tests**
-> Full new-user onboarding regression test added (`OnboardingLifecycleIntegrationTest`).
-> Covers: registration → MasterProfile creation → login → GET all sub-resources → create education/skill/experience → verify ownership at DB level → cross-user isolation (DELETE + PUT blocked with 404).
-> Phase 4 audit complete: 246/246 backend tests passing, 100/100 frontend tests passing, BUILD SUCCESSFUL, lint ✅.
+> **Phase 5A — PDF Export Foundation**
+> OpenPDF dependency added. `PdfGenerator` interface + `OpenPdfGenerator` implementation. `PdfExportService` owns ownership enforcement and data assembly. `ResumeVersionData` DTO carries all render data. `exportLimitExceeded` exception added. 4 unit tests proving in-memory PDF generation.
+> Phase 5A complete: 250/250 backend tests passing, BUILD SUCCESSFUL.
 
 ---
 
