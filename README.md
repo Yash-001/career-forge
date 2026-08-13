@@ -6,10 +6,10 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 1 — Authentication Complete**
-> Backend authentication infrastructure is implemented and tested.
-> JWT auth, password reset, email provider abstraction, and structured error handling are in place.
-> PostgreSQL runs via Docker Compose. Flyway migrations are applied automatically on startup.
+> **Phase 4E — Onboarding Lifecycle Integration Tests**
+> Full new-user onboarding regression test added (`OnboardingLifecycleIntegrationTest`).
+> Covers: registration → MasterProfile creation → login → GET all sub-resources → create education/skill/experience → verify ownership at DB level → cross-user isolation (DELETE + PUT blocked with 404).
+> Phase 4 audit complete: 246/246 backend tests passing, 100/100 frontend tests passing, BUILD SUCCESSFUL, lint ✅.
 
 ---
 

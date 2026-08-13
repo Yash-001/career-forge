@@ -6,6 +6,7 @@ import com.careerforge.backend.auth.domain.SubscriptionTier;
 import com.careerforge.backend.auth.domain.User;
 import com.careerforge.backend.auth.repository.PasswordResetTokenRepository;
 import com.careerforge.backend.auth.repository.UserRepository;
+import com.careerforge.backend.profile.repository.MasterProfileRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -33,11 +35,13 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
     @Autowired ObjectMapper objectMapper;
     @Autowired UserRepository userRepository;
     @Autowired PasswordResetTokenRepository resetTokenRepository;
+    @Autowired MasterProfileRepository masterProfileRepository;
     @Autowired PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void cleanDatabase() {
         resetTokenRepository.deleteAll();
+        masterProfileRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -254,6 +258,122 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
                                 "newPassword", "NewPass1"
                         ))))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ── Registration creates MasterProfile ──────────────────────────────────
+
+    @Test
+    void register_createsExactlyOneMasterProfile() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "profile@example.com",
+                                "password", "Password1"
+                        ))))
+                .andExpect(status().isCreated());
+
+        User user = userRepository.findByEmail("profile@example.com").orElseThrow();
+        assertThat(masterProfileRepository.existsByUserId(user.getId())).isTrue();
+        assertThat(masterProfileRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void register_masterProfileBelongsToRegisteredUser() throws Exception {
+        String body = objectMapper.writeValueAsString(Map.of(
+                "email", "owner@example.com",
+                "password", "Password1",
+                "firstName", "Alice",
+                "lastName", "Smith"
+        ));
+
+        String response = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        UUID userId = UUID.fromString(objectMapper.readTree(response).get("userId").asText());
+        assertThat(masterProfileRepository.findByUserId(userId)).isPresent();
+    }
+
+    @Test
+    void register_twoUsers_createsTwoIndependentProfiles() throws Exception {
+        for (String email : new String[]{"user1@example.com", "user2@example.com"}) {
+            mockMvc.perform(post("/api/v1/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of(
+                                    "email", email,
+                                    "password", "Password1"
+                            ))))
+                    .andExpect(status().isCreated());
+        }
+
+        assertThat(masterProfileRepository.findAll()).hasSize(2);
+        assertThat(userRepository.findAll()).hasSize(2);
+    }
+
+    @Test
+    void register_duplicateEmail_doesNotCreateDuplicateProfile() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "dup2@example.com",
+                                "password", "Password1"
+                        ))))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "dup2@example.com",
+                                "password", "Password1"
+                        ))))
+                .andExpect(status().isConflict());
+
+        assertThat(masterProfileRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void register_thenGetProfile_returns200() throws Exception {
+        String regBody = objectMapper.writeValueAsString(Map.of(
+                "email", "newuser@example.com",
+                "password", "Password1"
+        ));
+
+        String response = mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(regBody))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String accessToken = objectMapper.readTree(response).get("accessToken").asText();
+
+        mockMvc.perform(get("/api/v1/profile")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void login_doesNotCreateDuplicateProfile() throws Exception {
+        // Register (creates profile)
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "logindup@example.com",
+                                "password", "Password1"
+                        ))))
+                .andExpect(status().isCreated());
+
+        // Login (must not create another profile)
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "logindup@example.com",
+                                "password", "Password1"
+                        ))))
+                .andExpect(status().isOk());
+
+        assertThat(masterProfileRepository.findAll()).hasSize(1);
     }
 
     // ── Security ──────────────────────────────────────────────────────────────

@@ -1,0 +1,12 @@
+package com.careerforge.backend.profile.repository;
+
+import com.careerforge.backend.profile.domain.Skill;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.UUID;
+
+public interface SkillRepository extends JpaRepository<Skill, UUID> {
+
+    List<Skill> findByProfileIdOrderByDisplayOrderAsc(UUID profileId);
+}

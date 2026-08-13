@@ -6,9 +6,14 @@ export default mergeConfig(
   viteConfig,
   defineConfig({
     test: {
-      environment: 'jsdom',
+      environment: 'happy-dom',
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
+      server: {
+        deps: {
+          inline: ['primevue', '@primevue/core', '@primevue/themes', '@primeuix/styled', '@primeuix/utils', '@primeui/license-manager'],
+        },
+      },
     },
   }),
 )

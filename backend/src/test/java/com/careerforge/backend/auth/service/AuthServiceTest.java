@@ -6,6 +6,8 @@ import com.careerforge.backend.auth.domain.User;
 import com.careerforge.backend.auth.dto.*;
 import com.careerforge.backend.auth.repository.PasswordResetTokenRepository;
 import com.careerforge.backend.auth.repository.UserRepository;
+import com.careerforge.backend.profile.domain.MasterProfile;
+import com.careerforge.backend.profile.repository.MasterProfileRepository;
 import com.careerforge.backend.shared.email.EmailService;
 import com.careerforge.backend.shared.exception.ApiException;
 import com.careerforge.backend.shared.security.JwtService;
@@ -37,6 +39,7 @@ class AuthServiceTest {
 
     @Mock UserRepository userRepository;
     @Mock PasswordResetTokenRepository resetTokenRepository;
+    @Mock MasterProfileRepository masterProfileRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
     @Mock AuthenticationManager authenticationManager;
@@ -57,6 +60,8 @@ class AuthServiceTest {
         when(passwordEncoder.encode("Password1")).thenReturn("hashed");
         when(jwtService.generateAccessToken(any(), any())).thenReturn("access-token");
         when(jwtService.generateRefreshToken(any(), any())).thenReturn("refresh-token");
+        when(masterProfileRepository.existsByUserId(any())).thenReturn(false);
+        when(masterProfileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         User saved = User.builder()
                 .id(UUID.randomUUID()).email("user@example.com")
@@ -87,6 +92,8 @@ class AuthServiceTest {
         when(passwordEncoder.encode("Password1")).thenReturn("bcrypt-hash");
         when(jwtService.generateAccessToken(any(), any())).thenReturn("t");
         when(jwtService.generateRefreshToken(any(), any())).thenReturn("r");
+        when(masterProfileRepository.existsByUserId(any())).thenReturn(false);
+        when(masterProfileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         User saved = User.builder().id(UUID.randomUUID()).email("a@b.com")
@@ -105,6 +112,8 @@ class AuthServiceTest {
         when(passwordEncoder.encode(any())).thenReturn("hash");
         when(jwtService.generateAccessToken(any(), any())).thenReturn("t");
         when(jwtService.generateRefreshToken(any(), any())).thenReturn("r");
+        when(masterProfileRepository.existsByUserId(any())).thenReturn(false);
+        when(masterProfileRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         User saved = User.builder().id(UUID.randomUUID()).email("a@b.com")

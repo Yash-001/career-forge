@@ -30,4 +30,59 @@ public final class DomainExceptions {
         return new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND",
                 "The requested user could not be found.");
     }
+
+    public static ApiException profileNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "PROFILE_NOT_FOUND",
+                "No profile found for this user.");
+    }
+
+    public static ApiException workExperienceNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "WORK_EXPERIENCE_NOT_FOUND",
+                "Work experience entry not found.");
+    }
+
+    public static ApiException educationNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "EDUCATION_NOT_FOUND",
+                "Education entry not found.");
+    }
+
+    public static ApiException skillNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "SKILL_NOT_FOUND",
+                "Skill entry not found.");
+    }
+
+    public static ApiException resumeNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "RESUME_NOT_FOUND",
+                "Resume not found.");
+    }
+
+    public static ApiException resumeVersionNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "RESUME_VERSION_NOT_FOUND",
+                "Resume version not found.");
+    }
+
+    public static ApiException resumeNameBlank() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
+                "Resume name cannot be blank.");
+    }
+
+    public static ApiException resumeExperienceNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "RESUME_EXPERIENCE_NOT_FOUND",
+                "Resume experience entry not found.");
+    }
+
+    public static ApiException resumeEducationNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "RESUME_EDUCATION_NOT_FOUND",
+                "Resume education entry not found.");
+    }
+
+    public static ApiException resumeSkillNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "RESUME_SKILL_NOT_FOUND",
+                "Resume skill entry not found.");
+    }
+
+    public static ApiException invalidSuggestion() {
+        return new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "INVALID_SUGGESTION",
+                "One or more AI suggestions are no longer valid for this resume version.");
+    }
 }
