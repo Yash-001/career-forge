@@ -6,9 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 5A — PDF Export Foundation**
-> OpenPDF dependency added. `PdfGenerator` interface + `OpenPdfGenerator` implementation. `PdfExportService` owns ownership enforcement and data assembly. `ResumeVersionData` DTO carries all render data. `exportLimitExceeded` exception added. 4 unit tests proving in-memory PDF generation.
-> Phase 5A complete: 250/250 backend tests passing, BUILD SUCCESSFUL.
+> **Phase 5B — ATS-Friendly PDF Template**
+> `OpenPdfGenerator` fully implemented: single-column ATS template, correct section order, Helvetica fonts, uppercase headings with rule, empty-section guards, long-text wrapping, Unicode-safe. 8 tests using `PdfReader` + `PdfTextExtractor` to inspect rendered text.
+> Phase 5B complete: 255/255 backend tests passing, BUILD SUCCESSFUL.
 
 ---
 
