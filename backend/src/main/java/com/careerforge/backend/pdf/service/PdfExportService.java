@@ -7,13 +7,14 @@ import com.careerforge.backend.resume.domain.ResumeVersion;
 import com.careerforge.backend.resume.service.ResumeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Owns: ownership enforcement (via ResumeService), data assembly, billing limit enforcement (Phase 5B).
+ * Owns: ownership enforcement (via ResumeService), data assembly, billing limit enforcement (Phase 5C).
  * Delegates: PDF byte generation to PdfGenerator.
  */
 @Service
@@ -23,18 +24,37 @@ public class PdfExportService {
     private final ResumeService resumeService;
     private final PdfGenerator pdfGenerator;
 
+    @Transactional(readOnly = true)
     public byte[] exportVersion(User user, UUID resumeId, UUID versionId) {
         ResumeVersion version = resumeService.getVersionById(user, resumeId, versionId);
         ResumeVersionData data = toData(version);
         return pdfGenerator.generate(data);
     }
 
+    /**
+     * Returns a safe ASCII filename derived from the resume name and version title.
+     * Strips characters that are unsafe in Content-Disposition headers.
+     */
+    @Transactional(readOnly = true)
+    public String buildFilename(User user, UUID resumeId, UUID versionId) {
+        ResumeVersion version = resumeService.getVersionById(user, resumeId, versionId);
+        String resumeName = version.getResume().getName();
+        String versionTitle = version.getTitle();
+
+        String base = versionTitle != null && !versionTitle.isBlank()
+                ? resumeName + " - " + versionTitle
+                : resumeName;
+
+        // Replace any character that is not alphanumeric, space, hyphen, or underscore
+        String safe = base.replaceAll("[^a-zA-Z0-9 \\-_]", "").trim();
+        if (safe.isBlank()) safe = "resume";
+
+        return safe + ".pdf";
+    }
+
     private ResumeVersionData toData(ResumeVersion v) {
         User user = v.getResume().getUser();
-
         String fullName = joinNonBlank(" ", user.getFirstName(), user.getLastName());
-
-        var profile = v.getResume().getUser();  // contact info comes from User; profile fields from MasterProfile loaded separately if needed
 
         List<ResumeVersionData.ExperienceData> experiences = v.getExperiences().stream()
                 .map(e -> new ResumeVersionData.ExperienceData(
@@ -70,9 +90,9 @@ public class PdfExportService {
                 v.getTitle(),
                 fullName,
                 user.getEmail(),
-                null,    // phone — on MasterProfile, loaded in Phase 5B when profile is fetched
-                null,    // location — on MasterProfile
-                null,    // linkedInUrl — on MasterProfile
+                null,   // phone — on MasterProfile, wired in Phase 5C
+                null,   // location — on MasterProfile
+                null,   // linkedInUrl — on MasterProfile
                 v.getProfessionalSummary(),
                 experiences,
                 educations,
