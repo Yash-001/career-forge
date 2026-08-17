@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Owns: ownership enforcement (via ResumeService), data assembly, billing limit enforcement (Phase 5C).
+ * Owns: ownership enforcement (via ResumeService), data assembly, billing limit enforcement.
  * Delegates: PDF byte generation to PdfGenerator.
  */
 @Service
@@ -23,12 +23,16 @@ public class PdfExportService {
 
     private final ResumeService resumeService;
     private final PdfGenerator pdfGenerator;
+    private final ExportLimitService exportLimitService;
 
     @Transactional(readOnly = true)
     public byte[] exportVersion(User user, UUID resumeId, UUID versionId) {
+        exportLimitService.checkLimit(user);
         ResumeVersion version = resumeService.getVersionById(user, resumeId, versionId);
         ResumeVersionData data = toData(version);
-        return pdfGenerator.generate(data);
+        byte[] pdf = pdfGenerator.generate(data);
+        exportLimitService.recordExport(user);
+        return pdf;
     }
 
     /**

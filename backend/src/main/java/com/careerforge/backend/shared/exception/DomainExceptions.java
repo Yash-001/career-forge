@@ -87,7 +87,7 @@ public final class DomainExceptions {
     }
 
     public static ApiException exportLimitExceeded() {
-        return new ApiException(HttpStatus.PAYMENT_REQUIRED, "LIMIT_EXCEEDED",
+        return new ApiException(HttpStatus.PAYMENT_REQUIRED, "PDF_EXPORT_LIMIT_EXCEEDED",
                 "You have reached the 3 PDF export limit for this month. Upgrade to Pro for unlimited exports.");
     }
 }
