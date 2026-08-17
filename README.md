@@ -6,9 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 5B — ATS-Friendly PDF Template**
-> `OpenPdfGenerator` fully implemented: single-column ATS template, correct section order, Helvetica fonts, uppercase headings with rule, empty-section guards, long-text wrapping, Unicode-safe. 8 tests using `PdfReader` + `PdfTextExtractor` to inspect rendered text.
-> Phase 5B complete: 255/255 backend tests passing, BUILD SUCCESSFUL.
+> **Phase 5E — PDF Export UI**
+> Full PDF export pipeline complete: ATS-friendly PDF generation (`OpenPdfGenerator`), download API (`PdfController`), export tracking + free-tier limit enforcement (3/month for FREE, unlimited for PRO), and frontend Export PDF button with loading/error/limit states.
+> Phase 5E complete: 285/285 backend tests passing, 107/107 frontend tests passing, BUILD SUCCESSFUL.
 
 ---
 

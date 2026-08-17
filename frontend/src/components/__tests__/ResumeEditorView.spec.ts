@@ -52,6 +52,7 @@ vi.mock('@/api/resume', () => ({
       skills: [],
       createdAt: '2024-02-01T00:00:00Z',
     }),
+    exportVersionPdf: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
     extractError: vi.fn(() => ({ status: 500, code: 'ERROR', message: 'Something went wrong.' })),
   },
 }))
@@ -359,5 +360,143 @@ describe('ResumeEditorView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('New tailored version created!')
+  })
+})
+
+// ── PDF Export ────────────────────────────────────────────────────────────────
+
+describe('ResumeEditorView — PDF Export', () => {
+  let createObjectURL: ReturnType<typeof vi.fn>
+  let revokeObjectURL: ReturnType<typeof vi.fn>
+  let anchorClick: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+
+    createObjectURL = vi.fn(() => 'blob:mock-url')
+    revokeObjectURL = vi.fn()
+    Object.defineProperty(globalThis, 'URL', {
+      value: { createObjectURL, revokeObjectURL },
+      writable: true,
+      configurable: true,
+    })
+
+    anchorClick = vi.fn()
+    const origCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = origCreate(tag)
+      if (tag === 'a') vi.spyOn(el, 'click').mockImplementation(anchorClick)
+      return el
+    })
+  })
+
+  // 1. Button renders
+  it('renders Export PDF button', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    const btn = wrapper.find('[data-testid="export-pdf-btn"]')
+    expect(btn.exists()).toBe(true)
+    expect(btn.text()).toBe('Export PDF')
+  })
+
+  // 2. Loading state
+  it('shows loading state and disables button while exporting', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.exportVersionPdf).mockReturnValueOnce(new Promise(() => {}))
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="export-pdf-btn"]').trigger('click')
+
+    const btn = wrapper.find('[data-testid="export-pdf-btn"]')
+    expect(btn.text()).toContain('Exporting')
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(btn.find('.spinner').exists()).toBe(true)
+  })
+
+  // 3. Successful download
+  it('triggers browser download on successful export', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="export-pdf-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob))
+    expect(anchorClick).toHaveBeenCalled()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+  })
+
+  // 4. API failure shows error
+  it('shows error message on API failure', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.exportVersionPdf).mockRejectedValueOnce({})
+    vi.mocked(resumeApi.extractError).mockReturnValueOnce({
+      status: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'PDF generation failed.',
+    })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="export-pdf-btn"]').trigger('click')
+    await flushPromises()
+
+    const errorEl = wrapper.find('[data-testid="export-error"]')
+    expect(errorEl.exists()).toBe(true)
+    expect(errorEl.text()).toContain('PDF generation failed.')
+  })
+
+  // 5. Export limit error shows dedicated message
+  it('shows limit-reached message on PDF_EXPORT_LIMIT_EXCEEDED', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.exportVersionPdf).mockRejectedValueOnce({})
+    vi.mocked(resumeApi.extractError).mockReturnValueOnce({
+      status: 402,
+      code: 'PDF_EXPORT_LIMIT_EXCEEDED',
+      message: 'You have reached the 3 PDF export limit for this month.',
+    })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="export-pdf-btn"]').trigger('click')
+    await flushPromises()
+
+    const errorEl = wrapper.find('[data-testid="export-error"]')
+    expect(errorEl.exists()).toBe(true)
+    expect(errorEl.text()).toContain('Monthly PDF export limit reached')
+    expect(errorEl.text()).toContain('Upgrade to Pro')
+  })
+
+  // 6. Correct resume/version IDs are passed
+  it('calls exportVersionPdf with the current resumeId and versionId', async () => {
+    const { resumeApi } = await import('@/api/resume')
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.find('[data-testid="export-pdf-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(resumeApi.exportVersionPdf).toHaveBeenCalledWith('r1', 'v1')
+  })
+
+  // 7. Accessibility
+  it('has aria-label and sets aria-busy while exporting', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.exportVersionPdf).mockReturnValueOnce(new Promise(() => {}))
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const btn = wrapper.find('[data-testid="export-pdf-btn"]')
+    expect(btn.attributes('aria-label')).toBe('Export current version as PDF')
+
+    await btn.trigger('click')
+    expect(btn.attributes('aria-busy')).toBe('true')
   })
 })

@@ -20,6 +20,24 @@
           <span v-if="branching" class="spinner" aria-hidden="true" />
           {{ branching ? 'Branching…' : 'New Version' }}
         </button>
+        <button
+          class="btn btn-ghost btn-sm"
+          :disabled="exporting || !currentVersion"
+          :aria-busy="exporting"
+          aria-label="Export current version as PDF"
+          data-testid="export-pdf-btn"
+          @click="exportPdf"
+        >
+          <span v-if="exporting" class="spinner" aria-hidden="true" />
+          {{ exporting ? 'Exporting…' : 'Export PDF' }}
+        </button>
+        <div v-if="exportError" class="export-error" role="alert" data-testid="export-error">
+          <template v-if="exportLimitReached">
+            Monthly PDF export limit reached (3/3).
+            <span class="export-limit-hint">Upgrade to Pro for unlimited exports.</span>
+          </template>
+          <template v-else>{{ exportError }}</template>
+        </div>
       </div>
 
       <nav class="section-nav">
@@ -221,6 +239,9 @@ const currentVersion = ref<ResumeVersion | null>(null)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const branching = ref(false)
+const exporting = ref(false)
+const exportError = ref<string | null>(null)
+const exportLimitReached = ref(false)
 
 const activeSection = ref<'summary' | 'experience' | 'education' | 'skills' | 'ai'>('summary')
 
@@ -325,6 +346,36 @@ async function handleTailor() {
   await aiStore.tailorResume(resumeId, currentVersion.value.id)
 }
 
+async function exportPdf() {
+  if (!currentVersion.value) return
+  exporting.value = true
+  exportError.value = null
+  exportLimitReached.value = false
+  try {
+    const buffer = await resumeApi.exportVersionPdf(resumeId, currentVersion.value.id)
+    const blob = new Blob([buffer], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const safeName = (resumeName.value + (currentVersion.value.title ? ' - ' + currentVersion.value.title : ''))
+      .replace(/[^a-zA-Z0-9 \-_]/g, '')
+      .trim() || 'resume'
+    a.download = safeName + '.pdf'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    const apiErr = resumeApi.extractError(err)
+    if (apiErr.code === 'PDF_EXPORT_LIMIT_EXCEEDED') {
+      exportLimitReached.value = true
+      exportError.value = apiErr.message
+    } else {
+      exportError.value = apiErr.message
+    }
+  } finally {
+    exporting.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -392,6 +443,22 @@ onMounted(load)
 .version-history-link {
   text-align: center;
   text-decoration: none;
+}
+
+.export-error {
+  font-size: 0.75rem;
+  color: var(--color-error-text);
+  background: var(--color-error-bg);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  padding: 0.4rem 0.6rem;
+  line-height: 1.4;
+}
+
+.export-limit-hint {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--color-text-muted);
 }
 
 .section-nav {

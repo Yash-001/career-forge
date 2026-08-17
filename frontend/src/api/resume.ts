@@ -232,5 +232,14 @@ export const resumeApi = {
     await apiClient.delete(`/resumes/${resumeId}/versions/${versionId}/skills/${skillId}`)
   },
 
+  // PDF Export
+  async exportVersionPdf(resumeId: string, versionId: string): Promise<ArrayBuffer> {
+    const r = await apiClient.get<ArrayBuffer>(
+      `/resumes/${resumeId}/versions/${versionId}/pdf`,
+      { responseType: 'arraybuffer' },
+    )
+    return r.data
+  },
+
   extractError,
 }
