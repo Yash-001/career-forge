@@ -451,4 +451,159 @@ class ApplicationApiIntegrationTest extends AbstractIntegrationTest {
                         ))))
                 .andExpect(status().isBadRequest());
     }
+
+    // ── Phase 6C: Resume version linking ─────────────────────────────────────
+
+    @Test
+    void get_linkedVersion_returnsVersionTitleAndNumber() throws Exception {
+        User user = createUser("getversion@example.com");
+        createProfile(user);
+        String resumeId = createResume(user);
+        String versionId = getLatestVersionId(user, resumeId);
+
+        // Set a known title on the version
+        mockMvc.perform(put("/api/v1/resumes/" + resumeId + "/versions/" + versionId)
+                .header("Authorization", bearer(user))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                        "title", "Software Engineer — AI Tailored",
+                        "professionalSummary", "Summary"
+                ))));
+
+        MvcResult result = mockMvc.perform(post("/api/v1/applications")
+                        .header("Authorization", bearer(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "companyName", "Microsoft",
+                                "jobTitle", "Software Engineer",
+                                "applicationDate", "2024-06-01",
+                                "resumeVersionId", versionId
+                        ))))
+                .andReturn();
+        String appId = objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+
+        mockMvc.perform(get("/api/v1/applications/" + appId).header("Authorization", bearer(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resumeVersionId").value(versionId))
+                .andExpect(jsonPath("$.resumeVersionTitle").value("Software Engineer — AI Tailored"))
+                .andExpect(jsonPath("$.resumeVersionNumber").value(1));
+    }
+
+    @Test
+    void update_canChangeLinkedResumeVersion() throws Exception {
+        User user = createUser("changeversion@example.com");
+        createProfile(user);
+        String resumeId = createResume(user);
+        String v1Id = getLatestVersionId(user, resumeId);
+
+        // Create v2
+        mockMvc.perform(post("/api/v1/resumes/" + resumeId + "/versions")
+                .header("Authorization", bearer(user)));
+        String v2Id = getLatestVersionId(user, resumeId);
+
+        // Create application linked to v1
+        String appId = createApplicationWithVersion(user, "Corp", "Dev", v1Id);
+
+        // Update to link v2
+        mockMvc.perform(put("/api/v1/applications/" + appId)
+                        .header("Authorization", bearer(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "companyName", "Corp",
+                                "jobTitle", "Dev",
+                                "applicationDate", "2024-06-01",
+                                "status", "APPLIED",
+                                "resumeVersionId", v2Id
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resumeVersionId").value(v2Id))
+                .andExpect(jsonPath("$.resumeVersionNumber").value(2));
+    }
+
+    @Test
+    void update_canRemoveResumeVersionLink() throws Exception {
+        User user = createUser("removeversion@example.com");
+        createProfile(user);
+        String resumeId = createResume(user);
+        String versionId = getLatestVersionId(user, resumeId);
+
+        String appId = createApplicationWithVersion(user, "Corp", "Dev", versionId);
+
+        // Update without resumeVersionId — removes the link
+        mockMvc.perform(put("/api/v1/applications/" + appId)
+                        .header("Authorization", bearer(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "companyName", "Corp",
+                                "jobTitle", "Dev",
+                                "applicationDate", "2024-06-01",
+                                "status", "APPLIED"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resumeVersionId").doesNotExist());
+    }
+
+    @Test
+    void update_crossUserResumeVersion_returns404() throws Exception {
+        User userA = createUser("updvxA@example.com");
+        User userB = createUser("updvxB@example.com");
+        createProfile(userA);
+        String resumeId = createResume(userA);
+        String versionId = getLatestVersionId(userA, resumeId);
+
+        String appId = createApplication(userB, "Corp", "Dev");
+
+        mockMvc.perform(put("/api/v1/applications/" + appId)
+                        .header("Authorization", bearer(userB))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "companyName", "Corp",
+                                "jobTitle", "Dev",
+                                "applicationDate", "2024-06-01",
+                                "status", "APPLIED",
+                                "resumeVersionId", versionId
+                        ))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("RESUME_VERSION_NOT_FOUND"));
+    }
+
+    @Test
+    void resumeVersionDeletion_nullifiesLink_applicationRecordPreserved() throws Exception {
+        User user = createUser("versiondelete@example.com");
+        createProfile(user);
+        String resumeId = createResume(user);
+        String versionId = getLatestVersionId(user, resumeId);
+
+        String appId = createApplicationWithVersion(user, "Corp", "Dev", versionId);
+
+        // Delete the entire resume (cascades to version via ON DELETE CASCADE on resume_versions,
+        // which triggers ON DELETE SET NULL on job_applications.resume_version_id)
+        mockMvc.perform(delete("/api/v1/resumes/" + resumeId)
+                        .header("Authorization", bearer(user)))
+                .andExpect(status().isNoContent());
+
+        // Application record must still exist with nullified version link
+        mockMvc.perform(get("/api/v1/applications/" + appId).header("Authorization", bearer(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(appId))
+                .andExpect(jsonPath("$.companyName").value("Corp"))
+                .andExpect(jsonPath("$.resumeVersionId").doesNotExist());
+    }
+
+    // ── Helper for version-linked application creation ─────────────────────────
+
+    private String createApplicationWithVersion(User user, String company, String role,
+                                                String versionId) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/applications")
+                        .header("Authorization", bearer(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "companyName", company,
+                                "jobTitle", role,
+                                "applicationDate", "2024-06-01",
+                                "resumeVersionId", versionId
+                        ))))
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+    }
 }

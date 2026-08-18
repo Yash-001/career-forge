@@ -2,6 +2,7 @@ package com.careerforge.backend.application.controller;
 
 import com.careerforge.backend.application.domain.Application;
 import com.careerforge.backend.application.dto.ApplicationResponse;
+import com.careerforge.backend.resume.domain.ResumeVersion;
 import com.careerforge.backend.application.dto.CreateApplicationRequest;
 import com.careerforge.backend.application.dto.UpdateApplicationRequest;
 import com.careerforge.backend.application.service.ApplicationService;
@@ -64,6 +65,7 @@ public class ApplicationController {
     // ── Mapper ────────────────────────────────────────────────────────────────
 
     private ApplicationResponse toResponse(Application app) {
+        ResumeVersion rv = app.getResumeVersion();
         return new ApplicationResponse(
                 app.getId(),
                 app.getCompanyName(),
@@ -71,7 +73,9 @@ public class ApplicationController {
                 app.getApplicationDate(),
                 app.getJobUrl(),
                 app.getStatus(),
-                app.getResumeVersion() != null ? app.getResumeVersion().getId() : null,
+                rv != null ? rv.getId() : null,
+                rv != null ? rv.getTitle() : null,
+                rv != null ? rv.getVersionNumber() : null,
                 app.getCreatedAt(),
                 app.getUpdatedAt()
         );

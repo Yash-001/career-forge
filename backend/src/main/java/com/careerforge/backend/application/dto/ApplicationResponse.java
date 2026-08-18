@@ -14,6 +14,8 @@ public record ApplicationResponse(
         String jobUrl,
         ApplicationStatus status,
         UUID resumeVersionId,
+        String resumeVersionTitle,
+        Integer resumeVersionNumber,
         Instant createdAt,
         Instant updatedAt
 ) {}
