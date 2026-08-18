@@ -6,9 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 5E — PDF Export UI**
-> Full PDF export pipeline complete: ATS-friendly PDF generation (`OpenPdfGenerator`), download API (`PdfController`), export tracking + free-tier limit enforcement (3/month for FREE, unlimited for PRO), and frontend Export PDF button with loading/error/limit states.
-> Phase 5E complete: 285/285 backend tests passing, 107/107 frontend tests passing, BUILD SUCCESSFUL.
+> **Phase 6E — Job Application Tracker Complete**
+> Full job application tracker implemented: domain (ApplicationStatus enum, Application entity, V5 migration), REST API (CRUD at `/api/v1/applications`, ownership enforcement, resume version linking), frontend (ApplicationListView, ApplicationForm, StatusBadge, Pinia store, API module, router + nav). End-to-end hardened: cross-user isolation, ON DELETE SET NULL preserves history, @EntityGraph prevents LazyInitializationException, status badge is WCAG-accessible (dot + label, not color alone).
+> Phase 6E complete: 320 backend tests (63 unit + 257 integration), 136/136 frontend tests passing, BUILD SUCCESSFUL.
 
 ---
 

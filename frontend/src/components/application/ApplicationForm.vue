@@ -173,22 +173,17 @@ function validate(): boolean {
   return Object.keys(errors).length === 0
 }
 
-async function handleSubmit() {
+function handleSubmit() {
   if (!validate()) return
-  saving.value = true
   submitError.value = null
-  try {
-    emit('saved', {
-      companyName: form.companyName.trim(),
-      jobTitle: form.jobTitle.trim(),
-      applicationDate: form.applicationDate,
-      jobUrl: form.jobUrl.trim() || null,
-      status: form.status,
-      resumeVersionId: form.resumeVersionId || null,
-    })
-  } finally {
-    saving.value = false
-  }
+  emit('saved', {
+    companyName: form.companyName.trim(),
+    jobTitle: form.jobTitle.trim(),
+    applicationDate: form.applicationDate,
+    jobUrl: form.jobUrl.trim() || null,
+    status: form.status,
+    resumeVersionId: form.resumeVersionId || null,
+  })
 }
 
 defineExpose({ setSaving: (v: boolean) => { saving.value = v }, setError: (msg: string | null) => { submitError.value = msg } })
