@@ -90,4 +90,9 @@ public final class DomainExceptions {
         return new ApiException(HttpStatus.PAYMENT_REQUIRED, "PDF_EXPORT_LIMIT_EXCEEDED",
                 "You have reached the 3 PDF export limit for this month. Upgrade to Pro for unlimited exports.");
     }
+
+    public static ApiException applicationNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "APPLICATION_NOT_FOUND",
+                "Job application not found.");
+    }
 }
