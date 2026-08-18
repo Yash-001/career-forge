@@ -52,6 +52,12 @@ const router = createRouter({
       component: () => import('@/views/ResumeVersionHistoryView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/applications',
+      name: 'applications',
+      component: () => import('@/views/ApplicationListView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
