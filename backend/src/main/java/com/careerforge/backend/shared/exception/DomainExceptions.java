@@ -95,4 +95,19 @@ public final class DomainExceptions {
         return new ApiException(HttpStatus.NOT_FOUND, "APPLICATION_NOT_FOUND",
                 "Job application not found.");
     }
+
+    public static ApiException noActiveSubscription() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "NO_ACTIVE_SUBSCRIPTION",
+                "No active subscription found for this user.");
+    }
+
+    public static ApiException alreadyPro() {
+        return new ApiException(HttpStatus.CONFLICT, "ALREADY_PRO",
+                "This account already has an active Pro subscription.");
+    }
+
+    public static ApiException billingProviderError(String detail) {
+        return new ApiException(HttpStatus.BAD_GATEWAY, "BILLING_PROVIDER_ERROR",
+                "The billing provider returned an error: " + detail);
+    }
 }
