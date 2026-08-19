@@ -6,6 +6,7 @@ import com.careerforge.backend.auth.domain.User;
 import com.careerforge.backend.auth.dto.*;
 import com.careerforge.backend.auth.repository.PasswordResetTokenRepository;
 import com.careerforge.backend.auth.repository.UserRepository;
+import com.careerforge.backend.billing.SubscriptionService;
 import com.careerforge.backend.profile.domain.MasterProfile;
 import com.careerforge.backend.profile.repository.MasterProfileRepository;
 import com.careerforge.backend.shared.email.EmailService;
@@ -37,6 +38,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final MasterProfileRepository masterProfileRepository;
+    private final SubscriptionService subscriptionService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -67,6 +69,8 @@ public class AuthService {
         if (!masterProfileRepository.existsByUserId(user.getId())) {
             masterProfileRepository.save(MasterProfile.builder().user(user).build());
         }
+
+        subscriptionService.provisionFreeSubscription(user);
 
         log.info("event=USER_REGISTERED userId={}", user.getId());
 

@@ -6,6 +6,8 @@ import com.careerforge.backend.auth.domain.User;
 import com.careerforge.backend.auth.dto.*;
 import com.careerforge.backend.auth.repository.PasswordResetTokenRepository;
 import com.careerforge.backend.auth.repository.UserRepository;
+import com.careerforge.backend.billing.Subscription;
+import com.careerforge.backend.billing.SubscriptionService;
 import com.careerforge.backend.profile.domain.MasterProfile;
 import com.careerforge.backend.profile.repository.MasterProfileRepository;
 import com.careerforge.backend.shared.email.EmailService;
@@ -40,6 +42,7 @@ class AuthServiceTest {
     @Mock UserRepository userRepository;
     @Mock PasswordResetTokenRepository resetTokenRepository;
     @Mock MasterProfileRepository masterProfileRepository;
+    @Mock SubscriptionService subscriptionService;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
     @Mock AuthenticationManager authenticationManager;

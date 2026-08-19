@@ -6,9 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 6E — Job Application Tracker Complete**
-> Full job application tracker implemented: domain (ApplicationStatus enum, Application entity, V5 migration), REST API (CRUD at `/api/v1/applications`, ownership enforcement, resume version linking), frontend (ApplicationListView, ApplicationForm, StatusBadge, Pinia store, API module, router + nav). End-to-end hardened: cross-user isolation, ON DELETE SET NULL preserves history, @EntityGraph prevents LazyInitializationException, status badge is WCAG-accessible (dot + label, not color alone).
-> Phase 6E complete: 320 backend tests (63 unit + 257 integration), 136/136 frontend tests passing, BUILD SUCCESSFUL.
+> **Phase 7A — Billing & Subscription Domain Foundation**
+> Proper billing domain introduced: `Subscription` entity (`billing` package), `SubscriptionStatus` enum (`ACTIVE`, `INACTIVE`, `CANCELED`, `PAST_DUE`), `BillingProvider` enum (`DEMO`, `STRIPE`), `SubscriptionRepository`, `V6` Flyway migration with partial unique index enforcing one ACTIVE subscription per user. `SubscriptionService` interface extended with `findActiveSubscription` and `provisionFreeSubscription`. `DefaultSubscriptionService` wired to new repository. `AuthService` provisions a FREE/DEMO subscription on every registration. `User.subscriptionTier` retained as denormalized fast-read field — all existing callers unchanged. Pre-existing `GlobalExceptionHandler` gap fixed: `HttpMessageNotReadableException` now returns 400 instead of 500.
+> Phase 7A complete: 324/324 backend tests passing, BUILD SUCCESSFUL.
 
 ---
 
