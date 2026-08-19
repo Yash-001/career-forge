@@ -16,6 +16,8 @@ public class BillingConfig {
      * Selects the active BillingProviderPort implementation based on
      * app.billing.provider property. Defaults to demo.
      * No code changes required to switch providers — only config.
+     * StripeBillingProvider is registered as a bean but validates credentials
+     * at call time, not at startup, so the app runs without Stripe credentials.
      */
     @Bean
     public BillingProviderPort billingProviderPort(List<BillingProviderPort> providers) {
@@ -23,6 +25,7 @@ public class BillingConfig {
                 .filter(p -> p.getProvider().name().equalsIgnoreCase(providerName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                        "No BillingProviderPort found for provider: " + providerName));
+                        "No BillingProviderPort found for provider: " + providerName
+                        + ". Supported values: demo, stripe"));
     }
 }

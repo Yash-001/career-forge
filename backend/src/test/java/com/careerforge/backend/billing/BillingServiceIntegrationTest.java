@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -48,9 +49,6 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void billingService_usesProviderAbstraction() {
-        // BillingService must depend on BillingProviderPort, not DemoBillingProvider.
-        // Verified structurally: DefaultBillingService declares BillingProviderPort field.
-        // At runtime the injected bean must be the demo provider.
         assertThat(billingProviderPort).isInstanceOf(DemoBillingProvider.class);
         assertThat(billingProviderPort.getProvider()).isEqualTo(BillingProvider.DEMO);
     }
@@ -68,7 +66,6 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(result.getCurrentPeriodStart()).isNotNull();
         assertThat(result.getCurrentPeriodEnd()).isNotNull();
 
-        // User.subscriptionTier must be synced
         User reloaded = userRepository.findById(user.getId()).orElseThrow();
         assertThat(reloaded.getSubscriptionTier()).isEqualTo(SubscriptionTier.PRO);
     }
@@ -80,18 +77,12 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         User user = createUserWithSubscription("cancel@example.com", SubscriptionTier.FREE);
         billingService.upgrade(user);
 
-        // Reload user to get updated subscriptionTier
         User reloaded = userRepository.findById(user.getId()).orElseThrow();
-
-        // After cancel the subscription status is CANCELED (no longer ACTIVE),
-        // so findActiveByUserId returns empty — cancel must work on the upgraded sub.
-        // We need to re-fetch the subscription directly to verify state.
         Subscription canceled = billingService.cancel(reloaded);
 
         assertThat(canceled.getStatus()).isEqualTo(SubscriptionStatus.CANCELED);
         assertThat(canceled.getTier()).isEqualTo(SubscriptionTier.FREE);
 
-        // User.subscriptionTier must be synced back to FREE
         User afterCancel = userRepository.findById(user.getId()).orElseThrow();
         assertThat(afterCancel.getSubscriptionTier()).isEqualTo(SubscriptionTier.FREE);
     }
@@ -114,7 +105,6 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void upgrade_withNoActiveSubscription_throwsDomainError() {
-        // User exists but has no subscription record
         User user = userRepository.save(User.builder()
                 .email("nosub@example.com")
                 .passwordHash(passwordEncoder.encode("Password1"))
@@ -156,18 +146,25 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void billingService_isNotInstanceOfDemoBillingProvider() {
-        // DefaultBillingService must not be a DemoBillingProvider
         assertThat(billingService).isNotInstanceOf(DemoBillingProvider.class);
         assertThat(billingService).isInstanceOf(DefaultBillingService.class);
     }
 
-    // ── 7. No Stripe dependency exists ────────────────────────────────────────
+    // ── 7. Stripe SDK is on classpath; demo provider is active in test profile ─
 
     @Test
-    void noStripeDependency_classNotOnClasspath() {
-        // Stripe SDK must not be on the classpath in Phase 7B
-        assertThatThrownBy(() -> Class.forName("com.stripe.Stripe"))
-                .isInstanceOf(ClassNotFoundException.class);
+    void stripeSdk_isOnClasspath() {
+        // Stripe SDK is now a dependency — class must resolve
+        assertThatCode(() -> Class.forName("com.stripe.Stripe"))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void activeProvider_isDemoInTestProfile() {
+        // application-test.properties sets app.billing.provider=demo
+        // so the injected BillingProviderPort must be DemoBillingProvider, not Stripe
+        assertThat(billingProviderPort).isInstanceOf(DemoBillingProvider.class);
+        assertThat(billingProviderPort).isNotInstanceOf(StripeBillingProvider.class);
     }
 
     // ── 8. Existing PDF limits continue working after upgrade ─────────────────
@@ -176,22 +173,18 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
     void pdfExportLimit_bypassedAfterUpgrade() {
         User user = createUserWithSubscription("pdflimit@example.com", SubscriptionTier.FREE);
 
-        // Seed usage at the limit
         usageRepository.save(PdfExportUsage.builder()
                 .user(user)
                 .billingPeriod(LocalDate.now().withDayOfMonth(1))
                 .exportCount(3)
                 .build());
 
-        // Before upgrade: limit is enforced
         assertThatThrownBy(() -> exportLimitService.checkLimit(user))
                 .hasMessageContaining("PDF export limit");
 
-        // Upgrade to PRO
         billingService.upgrade(user);
         User reloaded = userRepository.findById(user.getId()).orElseThrow();
 
-        // After upgrade: limit is bypassed
         exportLimitService.checkLimit(reloaded); // must not throw
     }
 
@@ -201,21 +194,17 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         billingService.upgrade(user);
         User upgraded = userRepository.findById(user.getId()).orElseThrow();
 
-        // Seed usage at the limit
         usageRepository.save(PdfExportUsage.builder()
                 .user(upgraded)
                 .billingPeriod(LocalDate.now().withDayOfMonth(1))
                 .exportCount(3)
                 .build());
 
-        // Pro user: not blocked
         exportLimitService.checkLimit(upgraded);
 
-        // Cancel
         billingService.cancel(upgraded);
         User canceled = userRepository.findById(user.getId()).orElseThrow();
 
-        // After cancel: limit is re-enforced
         assertThatThrownBy(() -> exportLimitService.checkLimit(canceled))
                 .hasMessageContaining("PDF export limit");
     }

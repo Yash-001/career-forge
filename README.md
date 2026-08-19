@@ -6,9 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 7C — Billing REST API**
-> `BillingController` exposes three authenticated endpoints: `GET /api/v1/billing/subscription` (tier, status, provider, billing period, PDF usage for FREE users), `POST /api/v1/billing/checkout` (initiates PRO upgrade via `BillingService`), `POST /api/v1/billing/cancel` (cancels active subscription). `SubscriptionResponse` and `CheckoutResponse` DTOs. `ExportLimitService.FREE_MONTHLY_LIMIT` made `public`. User identity always sourced from `@AuthenticationPrincipal` — no userId accepted from request. 14 new integration tests.
-> Phase 7C complete: 348/348 backend tests passing, BUILD SUCCESSFUL.
+> **Phase 7E — Stripe Test-Mode Billing Provider**
+> `StripeBillingProvider` implements `BillingProviderPort` with full Stripe test-mode integration. Customer create/retrieve by email (idempotent), subscription creation, cancellation, and status retrieval. All Stripe SDK types confined to `StripeBillingProvider` — nothing leaks to domain. `StripeProperties` (`@ConfigurationProperties(prefix="stripe")`) holds credentials; `isConfigured()` validates at call time so the app starts without Stripe credentials. `DemoBillingProvider` remains the default (`app.billing.provider=demo`). `stripe-java:26.3.0` added to `build.gradle`. `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY` env vars documented in `.env.example`. `application-test.properties` explicitly sets `app.billing.provider=demo` and empty Stripe keys. `StripeBillingProviderTest` — 23 pure unit tests with `mockStatic` (no live API, no DB). `BillingServiceIntegrationTest` updated: stale ‘no Stripe on classpath’ test replaced with `stripeSdk_isOnClasspath` and `activeProvider_isDemoInTestProfile`.
+> Phase 7E complete: 371/371 backend tests passing, BUILD SUCCESSFUL.
 
 ---
 
