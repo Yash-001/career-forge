@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/v1/auth/**",
                     "/api/v1/health",
+                    "/api/v1/webhooks/stripe",
                     "/actuator/health"
                 ).permitAll()
                 .anyRequest().authenticated()

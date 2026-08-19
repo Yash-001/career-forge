@@ -16,4 +16,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
 
     /** Returns all subscriptions for a user (for lifecycle management). */
     List<Subscription> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    Optional<Subscription> findByProviderSubscriptionId(String providerSubscriptionId);
+
+    Optional<Subscription> findByProviderCustomerId(String providerCustomerId);
 }

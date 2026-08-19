@@ -6,6 +6,12 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
+> **Phase 7F — Stripe Webhook Synchronization**
+> `StripeWebhookController` at `POST /api/v1/webhooks/stripe` (permit-all — Stripe authenticates via signature). `StripeWebhookService` verifies signature via `Webhook.constructEvent`, processes events idempotently, and updates internal `Subscription` state. Events handled: `customer.subscription.created`, `customer.subscription.updated` (sync tier/status/period), `customer.subscription.deleted` (CANCELED + FREE), `invoice.payment_failed` (PAST_DUE). Unknown events are recorded and ignored. `stripe_webhook_events` table (V7 migration) stores `provider_event_id` with a unique constraint for deduplication — same event ID is never processed twice. `SubscriptionRepository` extended with `findByProviderSubscriptionId` and `findByProviderCustomerId`. Webhook endpoint excluded from JWT filter. `StripeWebhookServiceTest` — 8 pure unit tests with `@InjectMocks` (no live API, no DB). `DemoBillingProvider` unaffected.
+> Phase 7F complete: 379/379 backend tests passing, BUILD SUCCESSFUL.
+
+---
+
 > **Phase 7E — Stripe Test-Mode Billing Provider**
 > `StripeBillingProvider` implements `BillingProviderPort` with full Stripe test-mode integration. Customer create/retrieve by email (idempotent), subscription creation, cancellation, and status retrieval. All Stripe SDK types confined to `StripeBillingProvider` — nothing leaks to domain. `StripeProperties` (`@ConfigurationProperties(prefix="stripe")`) holds credentials; `isConfigured()` validates at call time so the app starts without Stripe credentials. `DemoBillingProvider` remains the default (`app.billing.provider=demo`). `stripe-java:26.3.0` added to `build.gradle`. `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY` env vars documented in `.env.example`. `application-test.properties` explicitly sets `app.billing.provider=demo` and empty Stripe keys. `StripeBillingProviderTest` — 23 pure unit tests with `mockStatic` (no live API, no DB). `BillingServiceIntegrationTest` updated: stale ‘no Stripe on classpath’ test replaced with `stripeSdk_isOnClasspath` and `activeProvider_isDemoInTestProfile`.
 > Phase 7E complete: 371/371 backend tests passing, BUILD SUCCESSFUL.
