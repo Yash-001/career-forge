@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class ExportLimitService {
 
-    static final int FREE_MONTHLY_LIMIT = 3;
+    public static final int FREE_MONTHLY_LIMIT = 3;
 
     private final PdfExportUsageRepository usageRepository;
     private final SubscriptionService subscriptionService;

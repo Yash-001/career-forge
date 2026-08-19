@@ -6,9 +6,9 @@ An AI-assisted career platform for building professional resumes, tailoring appl
 
 ## Status
 
-> **Phase 7A — Billing & Subscription Domain Foundation**
-> Proper billing domain introduced: `Subscription` entity (`billing` package), `SubscriptionStatus` enum (`ACTIVE`, `INACTIVE`, `CANCELED`, `PAST_DUE`), `BillingProvider` enum (`DEMO`, `STRIPE`), `SubscriptionRepository`, `V6` Flyway migration with partial unique index enforcing one ACTIVE subscription per user. `SubscriptionService` interface extended with `findActiveSubscription` and `provisionFreeSubscription`. `DefaultSubscriptionService` wired to new repository. `AuthService` provisions a FREE/DEMO subscription on every registration. `User.subscriptionTier` retained as denormalized fast-read field — all existing callers unchanged. Pre-existing `GlobalExceptionHandler` gap fixed: `HttpMessageNotReadableException` now returns 400 instead of 500.
-> Phase 7A complete: 324/324 backend tests passing, BUILD SUCCESSFUL.
+> **Phase 7C — Billing REST API**
+> `BillingController` exposes three authenticated endpoints: `GET /api/v1/billing/subscription` (tier, status, provider, billing period, PDF usage for FREE users), `POST /api/v1/billing/checkout` (initiates PRO upgrade via `BillingService`), `POST /api/v1/billing/cancel` (cancels active subscription). `SubscriptionResponse` and `CheckoutResponse` DTOs. `ExportLimitService.FREE_MONTHLY_LIMIT` made `public`. User identity always sourced from `@AuthenticationPrincipal` — no userId accepted from request. 14 new integration tests.
+> Phase 7C complete: 348/348 backend tests passing, BUILD SUCCESSFUL.
 
 ---
 
