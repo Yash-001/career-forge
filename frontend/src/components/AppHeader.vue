@@ -11,6 +11,7 @@
           <RouterLink to="/resumes" class="app-header__link">Resumes</RouterLink>
           <RouterLink to="/applications" class="app-header__link">Applications</RouterLink>
           <RouterLink to="/profile" class="app-header__link">Profile</RouterLink>
+          <RouterLink to="/billing" class="app-header__link">Billing</RouterLink>
           <button class="btn btn-ghost btn-sm" @click="handleLogout">Sign out</button>
         </template>
         <template v-else>
@@ -34,6 +35,7 @@
         <RouterLink to="/resumes" class="app-header__mobile-link" @click="menuOpen = false">Resumes</RouterLink>
         <RouterLink to="/applications" class="app-header__mobile-link" @click="menuOpen = false">Applications</RouterLink>
         <RouterLink to="/profile" class="app-header__mobile-link" @click="menuOpen = false">Profile</RouterLink>
+        <RouterLink to="/billing" class="app-header__mobile-link" @click="menuOpen = false">Billing</RouterLink>
         <button class="app-header__mobile-link app-header__mobile-link--btn" @click="handleLogout">Sign out</button>
       </template>
       <template v-else>

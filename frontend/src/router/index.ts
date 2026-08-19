@@ -58,6 +58,12 @@ const router = createRouter({
       component: () => import('@/views/ApplicationListView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/billing',
+      name: 'billing',
+      component: () => import('@/views/BillingView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
