@@ -67,6 +67,20 @@ export interface DashboardSummary {
   quickActions: DashboardQuickActions
 }
 
+export interface ApplicationTrendEntry {
+  year: number
+  month: number
+  count: number
+}
+
+export interface AnalyticsSummary {
+  pipelineApplied: number
+  pipelineInterview: number
+  pipelineOffer: number
+  pipelineRejected: number
+  trend: ApplicationTrendEntry[]
+}
+
 function extractError(err: unknown): { message: string } {
   const e = err as { response?: { data?: { message?: string; error?: { message?: string } } } }
   const msg =
@@ -79,6 +93,10 @@ function extractError(err: unknown): { message: string } {
 export const dashboardApi = {
   get: async (): Promise<DashboardSummary> => {
     const res = await apiClient.get('/dashboard')
+    return res.data
+  },
+  getAnalytics: async (): Promise<AnalyticsSummary> => {
+    const res = await apiClient.get('/dashboard/analytics')
     return res.data
   },
   extractError,

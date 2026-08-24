@@ -14,6 +14,8 @@ vi.mock('@/api/dashboard', () => ({
     // oxlint-disable-next-line vitest/require-mock-type-parameters
     get: vi.fn(),
     // oxlint-disable-next-line vitest/require-mock-type-parameters
+    getAnalytics: vi.fn(),
+    // oxlint-disable-next-line vitest/require-mock-type-parameters
     extractError: vi.fn((err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } }
       return { message: e?.response?.data?.message ?? 'Something went wrong.' }
@@ -84,6 +86,12 @@ describe('DashboardView', () => {
     pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
+    // Default stub for getAnalytics so it never hangs
+    import('@/api/dashboard').then(({ dashboardApi }) => {
+      vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
+        pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
+      })
+    })
   })
 
   // ── Loading state ─────────────────────────────────────────────────────────
@@ -516,14 +524,31 @@ describe('DashboardView', () => {
 
   // ── Store integration ─────────────────────────────────────────────────────
 
-  it('calls loadDashboard on mount', async () => {
+  it('calls loadDashboard and loadAnalytics on mount', async () => {
     const { dashboardApi } = await import('@/api/dashboard')
     vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
+    vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
+      pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
+    })
 
     mountView()
     await flushPromises()
 
     expect(dashboardApi.get).toHaveBeenCalledOnce()
+    expect(dashboardApi.getAnalytics).toHaveBeenCalledOnce()
+  })
+
+  it('renders analytics section when summary is loaded', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
+    vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
+      pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
+    })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="analytics-section"]').exists()).toBe(true)
   })
 
   it('store error is shown in error state', async () => {

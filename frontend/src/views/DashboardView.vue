@@ -93,6 +93,16 @@
             </div>
           </section>
 
+          <!-- Analytics -->
+          <div class="card">
+            <AnalyticsSection
+              :analytics="store.analytics"
+              :analytics-loading="store.analyticsLoading"
+              :analytics-error="store.analyticsError"
+              @retry="store.loadAnalytics()"
+            />
+          </div>
+
           <!-- Recent applications -->
           <section class="card" aria-labelledby="recent-apps-heading" data-testid="recent-apps-section">
             <div class="card-header">
@@ -255,12 +265,16 @@ import { RouterLink } from 'vue-router'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import StatusBadge from '@/components/application/StatusBadge.vue'
+import AnalyticsSection from '@/components/dashboard/AnalyticsSection.vue'
 import type { ApplicationStatus } from '@/api/application'
 
 const store = useDashboardStore()
 const auth = useAuthStore()
 
-onMounted(() => store.loadDashboard())
+onMounted(() => {
+  store.loadDashboard()
+  store.loadAnalytics()
+})
 
 // ── Greeting ───────────────────────────────────────────────────────────────
 const greeting = computed(() => {
