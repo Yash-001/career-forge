@@ -16,6 +16,8 @@ vi.mock('@/api/dashboard', () => ({
     // oxlint-disable-next-line vitest/require-mock-type-parameters
     getAnalytics: vi.fn(),
     // oxlint-disable-next-line vitest/require-mock-type-parameters
+    getActivity: vi.fn(),
+    // oxlint-disable-next-line vitest/require-mock-type-parameters
     extractError: vi.fn((err: unknown) => {
       const e = err as { response?: { data?: { message?: string } } }
       return { message: e?.response?.data?.message ?? 'Something went wrong.' }
@@ -57,8 +59,8 @@ const populatedSummary: DashboardSummary = {
     offer: 1,
     rejected: 1,
     recentApplications: [
-      { id: 'a1', companyName: 'Acme Corp', jobTitle: 'Backend Engineer', applicationDate: '2024-06-10', status: 'INTERVIEW' },
-      { id: 'a2', companyName: 'Beta Inc', jobTitle: 'Frontend Dev', applicationDate: '2024-06-05', status: 'APPLIED' },
+      { id: 'a1', companyName: 'Acme Corp', jobTitle: 'Backend Engineer', applicationDate: '2024-06-10', status: 'INTERVIEW', jobUrl: 'https://example.com/job/1' },
+      { id: 'a2', companyName: 'Beta Inc', jobTitle: 'Frontend Dev', applicationDate: '2024-06-05', status: 'APPLIED', jobUrl: null },
     ],
   },
   subscription: { tier: 'FREE', status: 'ACTIVE', provider: 'DEMO', currentPeriodStart: null, currentPeriodEnd: null },
@@ -86,11 +88,12 @@ describe('DashboardView', () => {
     pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
-    // Default stub for getAnalytics so it never hangs
+    // Default stubs so secondary calls never hang
     import('@/api/dashboard').then(({ dashboardApi }) => {
       vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
         pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
       })
+      vi.mocked(dashboardApi.getActivity).mockResolvedValue([])
     })
   })
 
@@ -524,18 +527,20 @@ describe('DashboardView', () => {
 
   // ── Store integration ─────────────────────────────────────────────────────
 
-  it('calls loadDashboard and loadAnalytics on mount', async () => {
+  it('calls loadDashboard, loadAnalytics, and loadActivity on mount', async () => {
     const { dashboardApi } = await import('@/api/dashboard')
     vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
     vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
       pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
     })
+    vi.mocked(dashboardApi.getActivity).mockResolvedValue([])
 
     mountView()
     await flushPromises()
 
     expect(dashboardApi.get).toHaveBeenCalledOnce()
     expect(dashboardApi.getAnalytics).toHaveBeenCalledOnce()
+    expect(dashboardApi.getActivity).toHaveBeenCalledOnce()
   })
 
   it('renders analytics section when summary is loaded', async () => {
@@ -549,6 +554,129 @@ describe('DashboardView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="analytics-section"]').exists()).toBe(true)
+  })
+
+  // ── Phase 8E: Quick action navigation ────────────────────────────────────
+
+  it('export resume action is present', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="action-export-resume"]').exists()).toBe(true)
+  })
+
+  it('tailor resume action links to first resume editor when resumes exist', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(populatedSummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const link = wrapper.find('[data-testid="action-tailor-resume"]')
+    expect(link.attributes('href')).toContain('/resumes/r1')
+  })
+
+  it('tailor resume action falls back to /resumes when no resumes', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const link = wrapper.find('[data-testid="action-tailor-resume"]')
+    expect(link.attributes('href')).toBe('/resumes')
+  })
+
+  it('export resume action links to first resume editor when resumes exist', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(populatedSummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const link = wrapper.find('[data-testid="action-export-resume"]')
+    expect(link.attributes('href')).toContain('/resumes/r1')
+  })
+
+  // ── Phase 8E: Recent application navigation ───────────────────────────────
+
+  it('recent application company name is a link to /applications', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(populatedSummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const link = wrapper.find('[data-testid="app-link-a1"]')
+    expect(link.exists()).toBe(true)
+    expect(link.attributes('href')).toBe('/applications')
+  })
+
+  // ── Phase 8E: Job URL handling ────────────────────────────────────────────
+
+  it('shows job URL link when jobUrl is a valid https URL', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(populatedSummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="job-url-a1"]').exists()).toBe(true)
+  })
+
+  it('does not show job URL link when jobUrl is null', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(populatedSummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="job-url-a2"]').exists()).toBe(false)
+  })
+
+  it('does not show job URL link for javascript: scheme', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue({
+      ...populatedSummary,
+      applications: {
+        ...populatedSummary.applications,
+        recentApplications: [
+          { id: 'a3', companyName: 'Evil Corp', jobTitle: 'Dev', applicationDate: '2024-06-10', status: 'APPLIED', jobUrl: 'javascript:alert(1)' },
+        ],
+      },
+    })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="job-url-a3"]').exists()).toBe(false)
+  })
+
+  it('job URL link has rel=noopener and target=_blank', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(populatedSummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const link = wrapper.find('[data-testid="job-url-a1"]')
+    expect(link.attributes('rel')).toContain('noopener')
+    expect(link.attributes('target')).toBe('_blank')
+  })
+
+  // ── Phase 8E: Activity section ────────────────────────────────────────────
+
+  it('renders activity section', async () => {
+    const { dashboardApi } = await import('@/api/dashboard')
+    vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="activity-section"]').exists()).toBe(true)
   })
 
   it('store error is shown in error state', async () => {

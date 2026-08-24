@@ -27,6 +27,7 @@ export interface RecentApplicationEntry {
   jobTitle: string
   applicationDate: string
   status: string
+  jobUrl: string | null
 }
 
 export interface DashboardApplications {
@@ -81,6 +82,14 @@ export interface AnalyticsSummary {
   trend: ApplicationTrendEntry[]
 }
 
+export interface ActivityEntry {
+  type: string
+  label: string
+  subLabel: string
+  linkPath: string
+  occurredAt: string
+}
+
 function extractError(err: unknown): { message: string } {
   const e = err as { response?: { data?: { message?: string; error?: { message?: string } } } }
   const msg =
@@ -97,6 +106,10 @@ export const dashboardApi = {
   },
   getAnalytics: async (): Promise<AnalyticsSummary> => {
     const res = await apiClient.get('/dashboard/analytics')
+    return res.data
+  },
+  getActivity: async (): Promise<ActivityEntry[]> => {
+    const res = await apiClient.get('/dashboard/activity')
     return res.data
   },
   extractError,

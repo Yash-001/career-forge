@@ -106,7 +106,8 @@ public class DashboardService {
                         a.getCompanyName(),
                         a.getJobTitle(),
                         a.getApplicationDate(),
-                        a.getStatus().name()))
+                        a.getStatus().name(),
+                        a.getJobUrl()))
                 .toList();
 
         return new ApplicationSummary(total, applied, interview, offer, rejected, recent);

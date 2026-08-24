@@ -43,4 +43,6 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     List<ApplicationTrendEntry> findMonthlyTrend(
             @Param("userId") UUID userId,
             @Param("since") LocalDate since);
+
+    List<Application> findTop5ByUserIdOrderByCreatedAtDesc(UUID userId);
 }

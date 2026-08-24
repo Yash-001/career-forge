@@ -8,5 +8,6 @@ public record RecentApplicationEntry(
         String companyName,
         String jobTitle,
         LocalDate applicationDate,
-        String status
+        String status,
+        String jobUrl
 ) {}

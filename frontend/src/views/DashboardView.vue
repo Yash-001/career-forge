@@ -119,11 +119,25 @@
                 class="recent-list__item"
               >
                 <div class="recent-list__body">
-                  <span class="recent-list__primary">{{ app.companyName }}</span>
+                  <RouterLink
+                    to="/applications"
+                    class="recent-list__primary recent-list__link"
+                    :aria-label="`${app.companyName} — ${app.jobTitle}, view applications`"
+                    :data-testid="`app-link-${app.id}`"
+                  >{{ app.companyName }}</RouterLink>
                   <span class="recent-list__secondary">{{ app.jobTitle }}</span>
                 </div>
                 <div class="recent-list__meta">
                   <span class="recent-list__date">{{ formatDate(app.applicationDate) }}</span>
+                  <a
+                    v-if="safeJobUrl(app.jobUrl)"
+                    :href="safeJobUrl(app.jobUrl)!"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="job-url-link"
+                    :aria-label="`View job posting for ${app.jobTitle} at ${app.companyName} (opens in new tab)`"
+                    :data-testid="`job-url-${app.id}`"
+                  >↗</a>
                   <StatusBadge :status="app.status as ApplicationStatus" />
                 </div>
               </li>
@@ -144,6 +158,7 @@
                 to="/resumes/new"
                 class="action-btn"
                 data-testid="action-create-resume"
+                aria-label="Create a new resume"
               >
                 <span class="action-btn__icon" aria-hidden="true">📄</span>
                 <span>Create Resume</span>
@@ -153,29 +168,60 @@
                 to="/billing"
                 class="action-btn action-btn--muted"
                 data-testid="action-resume-limit"
+                aria-label="Resume limit reached — upgrade to create more"
               >
                 <span class="action-btn__icon" aria-hidden="true">📄</span>
                 <span>Resume limit reached</span>
               </RouterLink>
-              <RouterLink to="/resumes" class="action-btn" data-testid="action-tailor-resume">
+              <RouterLink
+                :to="tailorResumeLink"
+                class="action-btn"
+                data-testid="action-tailor-resume"
+                aria-label="Tailor a resume with AI"
+              >
                 <span class="action-btn__icon" aria-hidden="true">🤖</span>
                 <span>Tailor Resume</span>
               </RouterLink>
-              <RouterLink to="/applications" class="action-btn" data-testid="action-track-application">
+              <RouterLink
+                to="/applications"
+                class="action-btn"
+                data-testid="action-track-application"
+                aria-label="Track a job application"
+              >
                 <span class="action-btn__icon" aria-hidden="true">📋</span>
                 <span>Track Application</span>
+              </RouterLink>
+              <RouterLink
+                :to="exportResumeLink"
+                class="action-btn"
+                data-testid="action-export-resume"
+                aria-label="Export resume as PDF"
+              >
+                <span class="action-btn__icon" aria-hidden="true">⬇️</span>
+                <span>Export Resume</span>
               </RouterLink>
               <RouterLink
                 v-if="store.summary.quickActions.canUpgrade"
                 to="/billing"
                 class="action-btn action-btn--upgrade"
                 data-testid="action-upgrade"
+                aria-label="Upgrade to Pro"
               >
                 <span class="action-btn__icon" aria-hidden="true">⚡</span>
                 <span>Upgrade to Pro</span>
               </RouterLink>
             </div>
           </section>
+
+          <!-- Recent Activity -->
+          <div class="card">
+            <RecentActivitySection
+              :activity="store.activity"
+              :activity-loading="store.activityLoading"
+              :activity-error="store.activityError"
+              @retry="store.loadActivity()"
+            />
+          </div>
 
           <!-- Subscription / usage card -->
           <section class="card" aria-labelledby="sub-heading" data-testid="subscription-section">
@@ -266,6 +312,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import StatusBadge from '@/components/application/StatusBadge.vue'
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection.vue'
+import RecentActivitySection from '@/components/dashboard/RecentActivitySection.vue'
 import type { ApplicationStatus } from '@/api/application'
 
 const store = useDashboardStore()
@@ -274,6 +321,7 @@ const auth = useAuthStore()
 onMounted(() => {
   store.loadDashboard()
   store.loadAnalytics()
+  store.loadActivity()
 })
 
 // ── Greeting ───────────────────────────────────────────────────────────────
@@ -311,6 +359,31 @@ function pipelineWidth(count: number): string {
   const total = store.summary?.applications.total ?? 0
   if (total === 0) return '0%'
   return Math.round((count / total) * 100) + '%'
+}
+
+// ── Quick action links ─────────────────────────────────────────────────────
+// Tailor: go to most recent resume editor at AI tab; fall back to /resumes
+const tailorResumeLink = computed(() => {
+  const first = store.summary?.resumes.recentResumes[0]
+  return first ? `/resumes/${first.id}?section=ai` : '/resumes'
+})
+
+// Export: go to most recent resume editor; fall back to /resumes
+const exportResumeLink = computed(() => {
+  const first = store.summary?.resumes.recentResumes[0]
+  return first ? `/resumes/${first.id}` : '/resumes'
+})
+
+// ── Safe external URL ──────────────────────────────────────────────────────
+function safeJobUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return url
+  } catch {
+    // invalid URL
+  }
+  return null
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────
@@ -551,6 +624,12 @@ function formatDate(iso: string): string {
   text-decoration: underline;
 }
 
+.recent-list__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .recent-list__secondary {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
@@ -572,6 +651,26 @@ function formatDate(iso: string): string {
   white-space: nowrap;
 }
 
+/* Job URL link */
+.job-url-link {
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  line-height: 1;
+  padding: 0.125rem 0.25rem;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+
+.job-url-link:hover {
+  background: #ede9fe;
+}
+
+.job-url-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* Quick actions */
 .actions-list {
   display: flex;
@@ -591,13 +690,18 @@ function formatDate(iso: string): string {
   text-decoration: none;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .action-btn:hover {
   background: #ede9fe;
   border-color: #c4b5fd;
   color: var(--color-primary);
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .action-btn--muted {
@@ -631,7 +735,7 @@ function formatDate(iso: string): string {
 .sub-tier--free { color: var(--color-text); }
 .sub-tier--pro  { color: var(--color-primary); }
 
-/* Usage (reuse BillingView patterns) */
+/* Usage */
 .usage-section {
   display: flex;
   flex-direction: column;
