@@ -28,4 +28,7 @@ public interface ResumeVersionRepository extends JpaRepository<ResumeVersion, UU
 
     @Query("SELECT v FROM ResumeVersion v WHERE v.id = :versionId AND v.resume.user.id = :userId")
     Optional<ResumeVersion> findByIdAndUserId(@Param("versionId") UUID versionId, @Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(v) FROM ResumeVersion v WHERE v.resume.user.id = :userId")
+    long countByResumeUserId(@Param("userId") UUID userId);
 }

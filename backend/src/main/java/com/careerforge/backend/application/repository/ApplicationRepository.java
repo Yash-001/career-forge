@@ -14,6 +14,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     @EntityGraph(attributePaths = {"resumeVersion"})
     List<Application> findByUserIdOrderByApplicationDateDesc(UUID userId);
 
+    List<Application> findTop5ByUserIdOrderByApplicationDateDesc(UUID userId);
+
     List<Application> findByUserIdAndStatusOrderByApplicationDateDesc(UUID userId, ApplicationStatus status);
 
     @EntityGraph(attributePaths = {"resumeVersion"})
