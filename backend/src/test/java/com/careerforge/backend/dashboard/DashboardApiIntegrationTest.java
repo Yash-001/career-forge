@@ -279,7 +279,9 @@ class DashboardApiIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.applications").exists())
                 .andExpect(jsonPath("$.subscription").exists())
                 .andExpect(jsonPath("$.usage").exists())
-                .andExpect(jsonPath("$.quickActions").exists());
+                .andExpect(jsonPath("$.quickActions").exists())
+                .andExpect(jsonPath("$.analytics").exists())
+                .andExpect(jsonPath("$.activity").isArray());
     }
 
     @Test

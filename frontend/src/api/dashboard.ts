@@ -66,6 +66,8 @@ export interface DashboardSummary {
   subscription: DashboardSubscription
   usage: DashboardUsage
   quickActions: DashboardQuickActions
+  analytics: AnalyticsSummary
+  activity: ActivityEntry[]
 }
 
 export interface ApplicationTrendEntry {

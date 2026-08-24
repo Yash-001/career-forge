@@ -1,6 +1,6 @@
 <template>
   <section class="analytics-section" aria-labelledby="analytics-heading" data-testid="analytics-section">
-    <h2 class="card-title" id="analytics-heading" style="margin-bottom: 1.25rem">Application Analytics</h2>
+    <h2 class="card-title analytics-section__heading" id="analytics-heading">Application Analytics</h2>
 
     <!-- Loading -->
     <div v-if="analyticsLoading" class="analytics-loading" aria-busy="true" aria-label="Loading analytics" data-testid="analytics-loading">
@@ -200,6 +200,10 @@ const trendAriaLabel = computed(() => {
   flex-direction: column;
 }
 
+.analytics-section__heading {
+  margin-bottom: 1.25rem;
+}
+
 .analytics-loading {
   padding: 0.5rem 0;
 }
@@ -367,7 +371,7 @@ const trendAriaLabel = computed(() => {
   text-align: center;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .analytics-grid {
     grid-template-columns: 1fr;
   }

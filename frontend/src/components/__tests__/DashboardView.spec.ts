@@ -40,6 +40,8 @@ const emptySummary: DashboardSummary = {
   subscription: { tier: 'FREE', status: 'ACTIVE', provider: 'DEMO', currentPeriodStart: null, currentPeriodEnd: null },
   usage: { pdfExportsUsed: 0, pdfExportsLimit: 3, atLimit: false },
   quickActions: { canCreateResume: true, canLogApplication: true, canUpgrade: true },
+  analytics: { pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [] },
+  activity: [],
 }
 
 const populatedSummary: DashboardSummary = {
@@ -66,6 +68,8 @@ const populatedSummary: DashboardSummary = {
   subscription: { tier: 'FREE', status: 'ACTIVE', provider: 'DEMO', currentPeriodStart: null, currentPeriodEnd: null },
   usage: { pdfExportsUsed: 2, pdfExportsLimit: 3, atLimit: false },
   quickActions: { canCreateResume: true, canLogApplication: true, canUpgrade: true },
+  analytics: { pipelineApplied: 2, pipelineInterview: 1, pipelineOffer: 1, pipelineRejected: 1, trend: [] },
+  activity: [],
 }
 
 const proSummary: DashboardSummary = {
@@ -73,6 +77,8 @@ const proSummary: DashboardSummary = {
   subscription: { tier: 'PRO', status: 'ACTIVE', provider: 'DEMO', currentPeriodStart: '2024-06-01T00:00:00Z', currentPeriodEnd: '2024-07-01T00:00:00Z' },
   usage: { pdfExportsUsed: 0, pdfExportsLimit: 0, atLimit: false },
   quickActions: { canCreateResume: true, canLogApplication: true, canUpgrade: false },
+  analytics: { pipelineApplied: 2, pipelineInterview: 1, pipelineOffer: 1, pipelineRejected: 1, trend: [] },
+  activity: [],
 }
 
 let pinia: ReturnType<typeof createPinia>
@@ -88,13 +94,6 @@ describe('DashboardView', () => {
     pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
-    // Default stubs so secondary calls never hang
-    import('@/api/dashboard').then(({ dashboardApi }) => {
-      vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
-        pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
-      })
-      vi.mocked(dashboardApi.getActivity).mockResolvedValue([])
-    })
   })
 
   // ── Loading state ─────────────────────────────────────────────────────────
@@ -527,28 +526,25 @@ describe('DashboardView', () => {
 
   // ── Store integration ─────────────────────────────────────────────────────
 
-  it('calls loadDashboard, loadAnalytics, and loadActivity on mount', async () => {
+  it('calls loadDashboard on mount and populates analytics and activity', async () => {
     const { dashboardApi } = await import('@/api/dashboard')
-    vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
-    vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
-      pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
+    vi.mocked(dashboardApi.get).mockResolvedValue({
+      ...emptySummary,
+      analytics: { pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [] },
+      activity: [],
     })
-    vi.mocked(dashboardApi.getActivity).mockResolvedValue([])
 
     mountView()
     await flushPromises()
 
     expect(dashboardApi.get).toHaveBeenCalledOnce()
-    expect(dashboardApi.getAnalytics).toHaveBeenCalledOnce()
-    expect(dashboardApi.getActivity).toHaveBeenCalledOnce()
+    expect(dashboardApi.getAnalytics).not.toHaveBeenCalled()
+    expect(dashboardApi.getActivity).not.toHaveBeenCalled()
   })
 
   it('renders analytics section when summary is loaded', async () => {
     const { dashboardApi } = await import('@/api/dashboard')
     vi.mocked(dashboardApi.get).mockResolvedValue(emptySummary)
-    vi.mocked(dashboardApi.getAnalytics).mockResolvedValue({
-      pipelineApplied: 0, pipelineInterview: 0, pipelineOffer: 0, pipelineRejected: 0, trend: [],
-    })
 
     const wrapper = mountView()
     await flushPromises()

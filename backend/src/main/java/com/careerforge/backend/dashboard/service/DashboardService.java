@@ -2,7 +2,6 @@ package com.careerforge.backend.dashboard.service;
 
 import com.careerforge.backend.application.domain.ApplicationStatus;
 import com.careerforge.backend.application.repository.ApplicationRepository;
-import com.careerforge.backend.auth.domain.SubscriptionTier;
 import com.careerforge.backend.auth.domain.User;
 import com.careerforge.backend.billing.Subscription;
 import com.careerforge.backend.billing.SubscriptionService;
@@ -33,6 +32,8 @@ public class DashboardService {
     private final ApplicationRepository applicationRepository;
     private final SubscriptionService subscriptionService;
     private final PdfExportUsageRepository pdfExportUsageRepository;
+    private final AnalyticsService analyticsService;
+    private final ActivityService activityService;
 
     @Transactional(readOnly = true)
     public DashboardSummary getDashboard(User user) {
@@ -42,7 +43,9 @@ public class DashboardService {
                 buildApplicationSummary(user),
                 buildSubscriptionSummary(user),
                 buildUsageSummary(user),
-                buildQuickActions(user)
+                buildQuickActions(user),
+                analyticsService.getAnalytics(user),
+                activityService.getRecentActivity(user)
         );
     }
 
@@ -60,11 +63,8 @@ public class DashboardService {
         return new ProfileSummary(true, hasTitle, hasSummary, hasContact, completion);
     }
 
-    /**
-     * Simple 4-point completion: exists (25%) + title (25%) + summary (25%) + contact (25%).
-     */
     private int computeProfileCompletion(boolean hasTitle, boolean hasSummary, boolean hasContact) {
-        int score = 25; // profile exists
+        int score = 25;
         if (hasTitle)   score += 25;
         if (hasSummary) score += 25;
         if (hasContact) score += 25;
@@ -74,19 +74,18 @@ public class DashboardService {
     // ── Resumes ───────────────────────────────────────────────────────────────
 
     private ResumeSummary buildResumeSummary(User user) {
-        long resumeCount   = resumeRepository.countByUserId(user.getId());
-        long versionCount  = resumeVersionRepository.countByResumeUserId(user.getId());
+        long resumeCount  = resumeRepository.countByUserId(user.getId());
+        long versionCount = resumeVersionRepository.countByResumeUserId(user.getId());
         List<RecentResumeEntry> recent = resumeRepository
-                .findTop5ByUserIdOrderByUpdatedAtDesc(user.getId())
+                .findTop5WithMaxVersionByUserId(user.getId())
                 .stream()
-                .map(this::toRecentResumeEntry)
+                .map(row -> {
+                    Resume r = (Resume) row[0];
+                    int maxVersion = ((Number) row[1]).intValue();
+                    return new RecentResumeEntry(r.getId(), r.getName(), maxVersion, r.getUpdatedAt());
+                })
                 .toList();
         return new ResumeSummary(resumeCount, versionCount, recent);
-    }
-
-    private RecentResumeEntry toRecentResumeEntry(Resume r) {
-        int latestVersion = resumeVersionRepository.findMaxVersionNumber(r.getId()).orElse(0);
-        return new RecentResumeEntry(r.getId(), r.getName(), latestVersion, r.getUpdatedAt());
     }
 
     // ── Applications ──────────────────────────────────────────────────────────
@@ -149,7 +148,6 @@ public class DashboardService {
     private QuickActions buildQuickActions(User user) {
         boolean isPro = subscriptionService.isPro(user);
         long resumeCount = resumeRepository.countByUserId(user.getId());
-        // Free users can create up to 2 resumes; Pro users are unlimited
         boolean canCreateResume = isPro || resumeCount < 2;
         return new QuickActions(canCreateResume, true, !isPro);
     }

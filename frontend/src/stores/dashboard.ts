@@ -17,7 +17,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     loading.value = true
     error.value = null
     try {
-      summary.value = await dashboardApi.get()
+      const data = await dashboardApi.get()
+      summary.value = data
+      // Populate analytics and activity from the single response
+      analytics.value = data.analytics
+      activity.value = data.activity
     } catch (err) {
       error.value = dashboardApi.extractError(err).message
     } finally {
@@ -25,6 +29,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  // Kept for the retry buttons in AnalyticsSection / RecentActivitySection
   async function loadAnalytics() {
     analyticsLoading.value = true
     analyticsError.value = null

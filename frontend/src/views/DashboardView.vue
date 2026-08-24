@@ -320,8 +320,6 @@ const auth = useAuthStore()
 
 onMounted(() => {
   store.loadDashboard()
-  store.loadAnalytics()
-  store.loadActivity()
 })
 
 // ── Greeting ───────────────────────────────────────────────────────────────
@@ -508,7 +506,7 @@ function formatDate(iso: string): string {
 /* Main grid */
 .main-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr minmax(0, 320px);
   gap: 1.5rem;
   align-items: start;
 }
@@ -809,7 +807,13 @@ function formatDate(iso: string): string {
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
+  .main-grid {
+    grid-template-columns: 1fr minmax(0, 280px);
+  }
+}
+
+@media (max-width: 768px) {
   .main-grid {
     grid-template-columns: 1fr;
   }
@@ -817,20 +821,25 @@ function formatDate(iso: string): string {
   .main-grid__right {
     order: -1;
   }
-}
 
-@media (max-width: 600px) {
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
 
+@media (max-width: 600px) {
   .welcome {
     flex-direction: column;
   }
 
   .profile-nudge {
     width: 100%;
+    flex-shrink: 1;
     justify-content: space-between;
+  }
+
+  .pipeline__row {
+    grid-template-columns: 64px 1fr 28px;
   }
 }
 </style>
