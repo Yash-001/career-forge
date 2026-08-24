@@ -8,6 +8,7 @@
 
       <nav class="app-header__nav" aria-label="Main navigation">
         <template v-if="auth.isAuthenticated">
+          <RouterLink to="/dashboard" class="app-header__link">Dashboard</RouterLink>
           <RouterLink to="/resumes" class="app-header__link">Resumes</RouterLink>
           <RouterLink to="/applications" class="app-header__link">Applications</RouterLink>
           <RouterLink to="/profile" class="app-header__link">Profile</RouterLink>
@@ -32,6 +33,7 @@
 
     <nav v-if="menuOpen" class="app-header__mobile-nav" aria-label="Mobile navigation">
       <template v-if="auth.isAuthenticated">
+        <RouterLink to="/dashboard" class="app-header__mobile-link" @click="menuOpen = false">Dashboard</RouterLink>
         <RouterLink to="/resumes" class="app-header__mobile-link" @click="menuOpen = false">Resumes</RouterLink>
         <RouterLink to="/applications" class="app-header__mobile-link" @click="menuOpen = false">Applications</RouterLink>
         <RouterLink to="/profile" class="app-header__mobile-link" @click="menuOpen = false">Profile</RouterLink>

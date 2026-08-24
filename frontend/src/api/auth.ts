@@ -1,6 +1,11 @@
 import apiClient from './client'
 
 export interface AuthResponse {
+  userId: string
+  email: string
+  firstName: string | null
+  lastName: string | null
+  subscriptionTier: string
   accessToken: string
   refreshToken: string
 }

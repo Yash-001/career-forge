@@ -4,21 +4,29 @@ import * as authApi from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem('access_token'))
+  const firstName = ref<string | null>(localStorage.getItem('user_first_name'))
   const authError = ref<string | null>(null)
   const authLoading = ref(false)
 
   const isAuthenticated = computed(() => !!accessToken.value)
 
-  function setTokens(access: string, refresh: string) {
+  function setTokens(access: string, refresh: string, name?: string | null) {
     accessToken.value = access
     localStorage.setItem('access_token', access)
     localStorage.setItem('refresh_token', refresh)
+    if (name !== undefined) {
+      firstName.value = name
+      if (name) localStorage.setItem('user_first_name', name)
+      else localStorage.removeItem('user_first_name')
+    }
   }
 
   function clearTokens() {
     accessToken.value = null
+    firstName.value = null
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user_first_name')
   }
 
   async function login(email: string, password: string): Promise<boolean> {
@@ -26,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     authLoading.value = true
     try {
       const data = await authApi.login(email, password)
-      setTokens(data.accessToken, data.refreshToken)
+      setTokens(data.accessToken, data.refreshToken, data.firstName)
       return true
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: { message?: string } } } }
@@ -37,12 +45,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(firstName: string, lastName: string, email: string, password: string): Promise<boolean> {
+  async function register(firstName_: string, lastName: string, email: string, password: string): Promise<boolean> {
     authError.value = null
     authLoading.value = true
     try {
-      const data = await authApi.register(firstName, lastName, email, password)
-      setTokens(data.accessToken, data.refreshToken)
+      const data = await authApi.register(firstName_, lastName, email, password)
+      setTokens(data.accessToken, data.refreshToken, data.firstName)
       return true
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: { message?: string } } } }
@@ -57,5 +65,5 @@ export const useAuthStore = defineStore('auth', () => {
     clearTokens()
   }
 
-  return { accessToken, isAuthenticated, authError, authLoading, setTokens, clearTokens, login, register, logout }
+  return { accessToken, firstName, isAuthenticated, authError, authLoading, setTokens, clearTokens, login, register, logout }
 })
