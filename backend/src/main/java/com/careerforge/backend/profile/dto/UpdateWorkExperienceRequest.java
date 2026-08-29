@@ -15,6 +15,6 @@ public record UpdateWorkExperienceRequest(
         @NotNull LocalDate startDate,
         LocalDate endDate,
         boolean currentlyWorking,
-        String description,
+        @Size(max = 5000) String description,
         int displayOrder
 ) {}

@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @RestController
@@ -27,9 +29,17 @@ public class PdfController {
         byte[] pdf = pdfExportService.exportVersion(user, resumeId, versionId);
         String filename = pdfExportService.buildFilename(user, resumeId, versionId);
 
+        // SEC: Use RFC 5987 filename* encoding to prevent header injection.
+        // The ASCII fallback (filename=) uses the sanitized name from buildFilename.
+        // The filename* parameter handles non-ASCII characters safely.
+        String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8)
+                .replace("+", "%20");
+        String contentDisposition = "attachment; filename=\"" + filename + "\"; "
+                + "filename*=UTF-8''" + encodedFilename;
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                 .body(pdf);
     }
 }

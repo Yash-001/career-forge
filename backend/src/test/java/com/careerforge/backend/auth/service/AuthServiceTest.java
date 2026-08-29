@@ -207,7 +207,7 @@ class AuthServiceTest {
                 .id(UUID.randomUUID()).user(user).tokenHash("token-hash")
                 .expiresAt(Instant.now().plus(1, ChronoUnit.HOURS)).used(false).build();
 
-        when(resetTokenRepository.findAll()).thenReturn(List.of(token));
+        when(resetTokenRepository.findValidTokens()).thenReturn(List.of(token));
         when(passwordEncoder.matches("raw-token", "token-hash")).thenReturn(true);
         when(passwordEncoder.encode("NewPass1")).thenReturn("new-hash");
 
@@ -218,29 +218,30 @@ class AuthServiceTest {
     }
 
     @Test
-    void resetPassword_expiredToken_throwsBadRequest() {
-        User user = User.builder().id(UUID.randomUUID()).email("user@example.com")
-                .passwordHash("hash").subscriptionTier(SubscriptionTier.FREE).build();
-
-        PasswordResetToken token = PasswordResetToken.builder()
-                .id(UUID.randomUUID()).user(user).tokenHash("token-hash")
-                .expiresAt(Instant.now().minus(1, ChronoUnit.HOURS)).used(false).build();
-
-        when(resetTokenRepository.findAll()).thenReturn(List.of(token));
-        when(passwordEncoder.matches("raw-token", "token-hash")).thenReturn(true);
+    void resetPassword_noMatchingToken_throwsBadRequest() {
+        // findValidTokens returns empty — no valid token exists
+        when(resetTokenRepository.findValidTokens()).thenReturn(List.of());
 
         assertThatThrownBy(() -> authService.resetPassword(
-                new ResetPasswordRequest("raw-token", "NewPass1")))
+                new ResetPasswordRequest("bad-token", "NewPass1")))
                 .isInstanceOf(ApiException.class)
                 .extracting("code").isEqualTo("INVALID_OR_EXPIRED_TOKEN");
     }
 
     @Test
-    void resetPassword_alreadyUsedToken_throwsBadRequest() {
-        when(resetTokenRepository.findAll()).thenReturn(List.of());
+    void resetPassword_tokenHashDoesNotMatch_throwsBadRequest() {
+        User user = User.builder().id(UUID.randomUUID()).email("user@example.com")
+                .passwordHash("hash").subscriptionTier(SubscriptionTier.FREE).build();
+
+        PasswordResetToken token = PasswordResetToken.builder()
+                .id(UUID.randomUUID()).user(user).tokenHash("token-hash")
+                .expiresAt(Instant.now().plus(1, ChronoUnit.HOURS)).used(false).build();
+
+        when(resetTokenRepository.findValidTokens()).thenReturn(List.of(token));
+        when(passwordEncoder.matches("wrong-token", "token-hash")).thenReturn(false);
 
         assertThatThrownBy(() -> authService.resetPassword(
-                new ResetPasswordRequest("used-token", "NewPass1")))
+                new ResetPasswordRequest("wrong-token", "NewPass1")))
                 .isInstanceOf(ApiException.class)
                 .extracting("code").isEqualTo("INVALID_OR_EXPIRED_TOKEN");
     }

@@ -13,6 +13,6 @@ public record ResumeEducationRequest(
         LocalDate startDate,
         LocalDate endDate,
         @Size(max = 50) String grade,
-        String description,
+        @Size(max = 5000) String description,
         int displayOrder
 ) {}
