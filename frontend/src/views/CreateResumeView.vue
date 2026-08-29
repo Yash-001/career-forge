@@ -8,13 +8,13 @@
     <div class="create-card card">
       <!-- Step indicator -->
       <div class="steps" aria-label="Creation steps">
-        <div class="step" :class="{ active: step === 1, done: step > 1 }">
-          <span class="step-num">1</span>
+        <div class="step" :class="{ active: step === 1, done: step > 1 }" :aria-current="step === 1 ? 'step' : undefined">
+          <span class="step-num" aria-hidden="true">1</span>
           <span class="step-label">Name your resume</span>
         </div>
         <div class="step-divider" aria-hidden="true" />
-        <div class="step" :class="{ active: step === 2 }">
-          <span class="step-num">2</span>
+        <div class="step" :class="{ active: step === 2 }" :aria-current="step === 2 ? 'step' : undefined">
+          <span class="step-num" aria-hidden="true">2</span>
           <span class="step-label">Snapshot profile</span>
         </div>
       </div>

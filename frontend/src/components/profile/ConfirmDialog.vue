@@ -1,11 +1,19 @@
 <template>
-  <div v-if="open" class="dialog-overlay" role="dialog" aria-modal="true" :aria-labelledby="'dialog-title-' + title" :aria-describedby="'dialog-msg-' + title">
-    <div class="dialog-box">
-      <h3 class="dialog-title" :id="'dialog-title-' + title">{{ title }}</h3>
-      <p class="dialog-message" :id="'dialog-msg-' + title">{{ message }}</p>
+  <div
+    v-if="open"
+    class="dialog-overlay"
+    role="dialog"
+    aria-modal="true"
+    :aria-labelledby="titleId"
+    :aria-describedby="msgId"
+    @keydown.esc="$emit('cancel')"
+  >
+    <div class="dialog-box" ref="boxRef" tabindex="-1">
+      <h3 class="dialog-title" :id="titleId">{{ title }}</h3>
+      <p class="dialog-message" :id="msgId">{{ message }}</p>
       <div v-if="error" class="dialog-error" role="alert">{{ error }}</div>
       <div class="dialog-actions">
-        <button class="btn btn-ghost" @click="$emit('cancel')" :disabled="loading">Cancel</button>
+        <button class="btn btn-ghost" ref="cancelRef" @click="$emit('cancel')" :disabled="loading">Cancel</button>
         <button class="btn btn-danger" @click="$emit('confirm')" :disabled="loading">
           <span v-if="loading" class="spinner" aria-hidden="true" />
           {{ loading ? 'Deleting…' : 'Delete' }}
@@ -16,7 +24,9 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { ref, watch, nextTick } from 'vue'
+
+const props = defineProps<{
   open: boolean
   title: string
   message: string
@@ -24,6 +34,24 @@ defineProps<{
   error?: string | null
 }>()
 defineEmits<{ confirm: []; cancel: [] }>()
+
+const boxRef = ref<HTMLElement | null>(null)
+const cancelRef = ref<HTMLElement | null>(null)
+
+// Stable IDs derived from a slug of the title (spaces → dashes, lowercase)
+const slug = props.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+const titleId = `dialog-title-${slug}`
+const msgId = `dialog-msg-${slug}`
+
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (isOpen) {
+      await nextTick()
+      cancelRef.value?.focus()
+    }
+  },
+)
 </script>
 
 <style scoped>
@@ -42,6 +70,7 @@ defineEmits<{ confirm: []; cancel: [] }>()
   padding: 1.5rem;
   width: min(420px, 90vw);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  outline: none;
 }
 .dialog-title {
   font-size: 1rem;

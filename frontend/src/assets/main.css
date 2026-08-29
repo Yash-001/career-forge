@@ -58,6 +58,11 @@ body {
   cursor: not-allowed;
 }
 
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .btn-primary {
   background: var(--color-primary);
   color: #fff;
@@ -145,7 +150,8 @@ body {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  outline: none;
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 0;
   border-color: var(--color-border-focus);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
@@ -277,6 +283,19 @@ body {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: currentColor;
+    opacity: 0.6;
+  }
+
+  .skeleton {
+    animation: none;
+    background: #e8e8e8;
   }
 }
 

@@ -157,8 +157,9 @@
         aria-labelledby="cancel-dialog-title"
         aria-describedby="cancel-dialog-desc"
         data-testid="cancel-dialog"
+        @keydown.esc="showCancelConfirm = false"
       >
-        <div class="dialog-box">
+        <div class="dialog-box" ref="cancelDialogRef" tabindex="-1">
           <h3 class="dialog-title" id="cancel-dialog-title">Cancel Subscription?</h3>
           <p class="dialog-message" id="cancel-dialog-desc">
             Your Pro plan will be canceled. You'll keep Pro access until the end of the current billing period,
@@ -190,11 +191,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useBillingStore } from '@/stores/billing'
 
 const store = useBillingStore()
 const showCancelConfirm = ref(false)
+const cancelDialogRef = ref<HTMLElement | null>(null)
+
+watch(showCancelConfirm, async (open) => {
+  if (open) {
+    await nextTick()
+    cancelDialogRef.value?.focus()
+  }
+})
 
 onMounted(() => store.loadSubscription())
 

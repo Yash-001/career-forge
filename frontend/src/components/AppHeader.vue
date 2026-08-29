@@ -24,6 +24,7 @@
       <button
         class="app-header__menu-toggle"
         :aria-expanded="menuOpen"
+        aria-controls="mobile-nav"
         aria-label="Toggle navigation"
         @click="menuOpen = !menuOpen"
       >
@@ -31,7 +32,7 @@
       </button>
     </div>
 
-    <nav v-if="menuOpen" class="app-header__mobile-nav" aria-label="Mobile navigation">
+    <nav v-if="menuOpen" id="mobile-nav" class="app-header__mobile-nav" aria-label="Mobile navigation" @keydown.esc="menuOpen = false">
       <template v-if="auth.isAuthenticated">
         <RouterLink to="/dashboard" class="app-header__mobile-link" @click="menuOpen = false">Dashboard</RouterLink>
         <RouterLink to="/resumes" class="app-header__mobile-link" @click="menuOpen = false">Resumes</RouterLink>

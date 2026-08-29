@@ -47,7 +47,7 @@
                 maxlength="255"
                 ref="renameInputRef"
               />
-              <div v-if="renameError" class="field-error">{{ renameError }}</div>
+              <div v-if="renameError" class="field-error" role="alert">{{ renameError }}</div>
             </template>
             <span v-else>{{ resume.name }}</span>
           </div>

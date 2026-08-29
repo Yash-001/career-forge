@@ -16,9 +16,11 @@
             autocomplete="email"
             placeholder="you@example.com"
             :class="{ error: errors.email }"
+            :aria-invalid="!!errors.email || undefined"
+            :aria-describedby="errors.email ? 'err-email' : undefined"
             :disabled="auth.authLoading"
           />
-          <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
+          <span v-if="errors.email" id="err-email" class="field-error" role="alert">{{ errors.email }}</span>
         </div>
 
         <div class="field">
@@ -30,9 +32,11 @@
             autocomplete="current-password"
             placeholder="••••••••"
             :class="{ error: errors.password }"
+            :aria-invalid="!!errors.password || undefined"
+            :aria-describedby="errors.password ? 'err-password' : undefined"
             :disabled="auth.authLoading"
           />
-          <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
+          <span v-if="errors.password" id="err-password" class="field-error" role="alert">{{ errors.password }}</span>
         </div>
 
         <div v-if="auth.authError" class="api-error" role="alert">{{ auth.authError }}</div>

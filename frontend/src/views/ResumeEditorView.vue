@@ -1,7 +1,7 @@
 <template>
   <div class="editor-layout">
     <!-- Sidebar -->
-    <aside class="editor-sidebar">
+    <aside class="editor-sidebar" aria-label="Resume navigation">
       <div class="sidebar-header">
         <RouterLink to="/resumes" class="back-link">← Resumes</RouterLink>
         <h2 class="resume-name">{{ resumeName }}</h2>
@@ -41,12 +41,13 @@
         </div>
       </div>
 
-      <nav class="section-nav">
+      <nav class="section-nav" aria-label="Resume sections">
         <button
           v-for="s in sections"
           :key="s.key"
           class="nav-item"
           :class="{ active: activeSection === s.key }"
+          :aria-current="activeSection === s.key ? 'true' : undefined"
           @click="activeSection = s.key"
         >
           {{ s.label }}
@@ -55,6 +56,7 @@
         <button
           class="nav-item nav-item--ai"
           :class="{ active: activeSection === 'ai' }"
+          :aria-current="activeSection === 'ai' ? 'true' : undefined"
           @click="activeSection = 'ai'"
         >
           AI Tailoring
@@ -63,7 +65,7 @@
     </aside>
 
     <!-- Main content -->
-    <main class="editor-main">
+    <main class="editor-main" aria-label="Resume editor">
       <div v-if="loadError" class="api-error" role="alert">
         {{ loadError }}
         <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="load">Retry</button>
@@ -489,6 +491,11 @@ onMounted(load)
 .nav-item:hover {
   background: var(--color-bg);
   color: var(--color-text);
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .nav-item.active {

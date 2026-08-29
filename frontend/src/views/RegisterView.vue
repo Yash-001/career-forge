@@ -18,9 +18,11 @@
               autocomplete="given-name"
               placeholder="Jane"
               :class="{ error: errors.firstName }"
+              :aria-invalid="!!errors.firstName || undefined"
+              :aria-describedby="errors.firstName ? 'err-firstName' : undefined"
               :disabled="auth.authLoading"
             />
-            <span v-if="errors.firstName" class="field-error">{{ errors.firstName }}</span>
+            <span v-if="errors.firstName" id="err-firstName" class="field-error" role="alert">{{ errors.firstName }}</span>
           </div>
           <div class="field">
             <label for="lastName">Last name</label>
@@ -31,9 +33,11 @@
               autocomplete="family-name"
               placeholder="Smith"
               :class="{ error: errors.lastName }"
+              :aria-invalid="!!errors.lastName || undefined"
+              :aria-describedby="errors.lastName ? 'err-lastName' : undefined"
               :disabled="auth.authLoading"
             />
-            <span v-if="errors.lastName" class="field-error">{{ errors.lastName }}</span>
+            <span v-if="errors.lastName" id="err-lastName" class="field-error" role="alert">{{ errors.lastName }}</span>
           </div>
         </div>
 
@@ -46,9 +50,11 @@
             autocomplete="email"
             placeholder="you@example.com"
             :class="{ error: errors.email }"
+            :aria-invalid="!!errors.email || undefined"
+            :aria-describedby="errors.email ? 'err-email' : undefined"
             :disabled="auth.authLoading"
           />
-          <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
+          <span v-if="errors.email" id="err-email" class="field-error" role="alert">{{ errors.email }}</span>
         </div>
 
         <div class="field">
@@ -60,9 +66,11 @@
             autocomplete="new-password"
             placeholder="8+ characters, at least one number"
             :class="{ error: errors.password }"
+            :aria-invalid="!!errors.password || undefined"
+            :aria-describedby="errors.password ? 'err-password' : undefined"
             :disabled="auth.authLoading"
           />
-          <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
+          <span v-if="errors.password" id="err-password" class="field-error" role="alert">{{ errors.password }}</span>
         </div>
 
         <div v-if="auth.authError" class="api-error" role="alert">{{ auth.authError }}</div>

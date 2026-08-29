@@ -1,6 +1,6 @@
 <template>
-  <div class="dialog-overlay" role="dialog" aria-modal="true" :aria-labelledby="titleId">
-    <div class="dialog-box">
+  <div class="dialog-overlay" role="dialog" aria-modal="true" :aria-labelledby="titleId" @keydown.esc="$emit('cancel')">
+    <div class="dialog-box" tabindex="-1" ref="boxRef">
       <h3 class="dialog-title" :id="titleId">{{ isEdit ? 'Edit Application' : 'Add Application' }}</h3>
 
       <form class="form" @submit.prevent="handleSubmit" novalidate>
@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, nextTick } from 'vue'
 import { resumeApi } from '@/api/resume'
 import type { ApplicationResponse, ApplicationStatus } from '@/api/application'
 
@@ -129,6 +129,8 @@ const emit = defineEmits<{
 const isEdit = !!props.initial
 const titleId = isEdit ? 'edit-app-dialog' : 'add-app-dialog'
 
+const boxRef = ref<HTMLElement | null>(null)
+
 const form = reactive({
   companyName: props.initial?.companyName ?? '',
   jobTitle: props.initial?.jobTitle ?? '',
@@ -146,6 +148,9 @@ const versions = ref<VersionOption[]>([])
 const versionsLoading = ref(false)
 
 onMounted(async () => {
+  await nextTick()
+  boxRef.value?.focus()
+
   versionsLoading.value = true
   try {
     const resumes = await resumeApi.listResumes()

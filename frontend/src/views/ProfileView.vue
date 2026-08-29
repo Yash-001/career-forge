@@ -79,18 +79,18 @@
         <form class="form" @submit.prevent="saveOnline" novalidate>
           <div class="field">
             <label for="p-linkedin">LinkedIn URL</label>
-            <input id="p-linkedin" v-model="online.linkedinUrl" type="url" placeholder="https://linkedin.com/in/yourname" :class="{ error: onlineErrors.linkedinUrl }" />
-            <span v-if="onlineErrors.linkedinUrl" class="field-error">{{ onlineErrors.linkedinUrl }}</span>
+            <input id="p-linkedin" v-model="online.linkedinUrl" type="url" placeholder="https://linkedin.com/in/yourname" :class="{ error: onlineErrors.linkedinUrl }" :aria-invalid="!!onlineErrors.linkedinUrl || undefined" :aria-describedby="onlineErrors.linkedinUrl ? 'err-linkedin' : undefined" />
+            <span v-if="onlineErrors.linkedinUrl" id="err-linkedin" class="field-error" role="alert">{{ onlineErrors.linkedinUrl }}</span>
           </div>
           <div class="field">
             <label for="p-github">GitHub URL</label>
-            <input id="p-github" v-model="online.githubUrl" type="url" placeholder="https://github.com/yourname" :class="{ error: onlineErrors.githubUrl }" />
-            <span v-if="onlineErrors.githubUrl" class="field-error">{{ onlineErrors.githubUrl }}</span>
+            <input id="p-github" v-model="online.githubUrl" type="url" placeholder="https://github.com/yourname" :class="{ error: onlineErrors.githubUrl }" :aria-invalid="!!onlineErrors.githubUrl || undefined" :aria-describedby="onlineErrors.githubUrl ? 'err-github' : undefined" />
+            <span v-if="onlineErrors.githubUrl" id="err-github" class="field-error" role="alert">{{ onlineErrors.githubUrl }}</span>
           </div>
           <div class="field">
             <label for="p-portfolio">Portfolio URL</label>
-            <input id="p-portfolio" v-model="online.portfolioUrl" type="url" placeholder="https://yoursite.com" :class="{ error: onlineErrors.portfolioUrl }" />
-            <span v-if="onlineErrors.portfolioUrl" class="field-error">{{ onlineErrors.portfolioUrl }}</span>
+            <input id="p-portfolio" v-model="online.portfolioUrl" type="url" placeholder="https://yoursite.com" :class="{ error: onlineErrors.portfolioUrl }" :aria-invalid="!!onlineErrors.portfolioUrl || undefined" :aria-describedby="onlineErrors.portfolioUrl ? 'err-portfolio' : undefined" />
+            <span v-if="onlineErrors.portfolioUrl" id="err-portfolio" class="field-error" role="alert">{{ onlineErrors.portfolioUrl }}</span>
           </div>
           <div v-if="onlineError" class="api-error" role="alert">{{ onlineError }}</div>
           <div v-if="onlineSaved" class="save-success" role="status">Online profiles saved.</div>

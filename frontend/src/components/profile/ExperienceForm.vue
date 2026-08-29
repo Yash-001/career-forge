@@ -2,28 +2,34 @@
   <form class="form" @submit.prevent="handleSubmit" novalidate>
     <div class="form-row">
       <div class="field">
-        <label for="exp-company">Company *</label>
+        <label for="exp-company">Company <span aria-hidden="true">*</span></label>
         <input
           id="exp-company"
           v-model="form.companyName"
           type="text"
           placeholder="Acme Corp"
           :class="{ error: errors.companyName }"
+          :aria-invalid="!!errors.companyName || undefined"
+          :aria-describedby="errors.companyName ? 'err-exp-company' : undefined"
+          aria-required="true"
           maxlength="255"
         />
-        <span v-if="errors.companyName" class="field-error">{{ errors.companyName }}</span>
+        <span v-if="errors.companyName" id="err-exp-company" class="field-error" role="alert">{{ errors.companyName }}</span>
       </div>
       <div class="field">
-        <label for="exp-title">Job Title *</label>
+        <label for="exp-title">Job Title <span aria-hidden="true">*</span></label>
         <input
           id="exp-title"
           v-model="form.jobTitle"
           type="text"
           placeholder="Software Engineer"
           :class="{ error: errors.jobTitle }"
+          :aria-invalid="!!errors.jobTitle || undefined"
+          :aria-describedby="errors.jobTitle ? 'err-exp-title' : undefined"
+          aria-required="true"
           maxlength="255"
         />
-        <span v-if="errors.jobTitle" class="field-error">{{ errors.jobTitle }}</span>
+        <span v-if="errors.jobTitle" id="err-exp-title" class="field-error" role="alert">{{ errors.jobTitle }}</span>
       </div>
     </div>
 
@@ -43,14 +49,17 @@
 
     <div class="form-row">
       <div class="field">
-        <label for="exp-start">Start Date *</label>
+        <label for="exp-start">Start Date <span aria-hidden="true">*</span></label>
         <input
           id="exp-start"
           v-model="form.startDate"
           type="date"
+          aria-required="true"
+          :aria-invalid="!!errors.startDate || undefined"
+          :aria-describedby="errors.startDate ? 'err-exp-start' : undefined"
           :class="{ error: errors.startDate }"
         />
-        <span v-if="errors.startDate" class="field-error">{{ errors.startDate }}</span>
+        <span v-if="errors.startDate" id="err-exp-start" class="field-error" role="alert">{{ errors.startDate }}</span>
       </div>
       <div class="field">
         <label for="exp-end">End Date</label>
@@ -59,9 +68,11 @@
           v-model="form.endDate"
           type="date"
           :disabled="form.currentlyWorking"
+          :aria-invalid="!!errors.endDate || undefined"
+          :aria-describedby="errors.endDate ? 'err-exp-end' : undefined"
           :class="{ error: errors.endDate }"
         />
-        <span v-if="errors.endDate" class="field-error">{{ errors.endDate }}</span>
+        <span v-if="errors.endDate" id="err-exp-end" class="field-error" role="alert">{{ errors.endDate }}</span>
       </div>
     </div>
 
@@ -82,7 +93,7 @@
       <input id="exp-order" v-model.number="form.displayOrder" type="number" min="0" style="width: 80px" />
     </div>
 
-    <div v-if="apiError" class="api-error">{{ apiError }}</div>
+    <div v-if="apiError" class="api-error" role="alert">{{ apiError }}</div>
 
     <div class="form-actions">
       <button type="button" class="btn btn-ghost" @click="$emit('cancel')" :disabled="saving">Cancel</button>

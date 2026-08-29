@@ -2,16 +2,19 @@
   <form class="form" @submit.prevent="handleSubmit" novalidate>
     <div class="form-row">
       <div class="field">
-        <label for="edu-institution">Institution *</label>
+        <label for="edu-institution">Institution <span aria-hidden="true">*</span></label>
         <input
           id="edu-institution"
           v-model="form.institutionName"
           type="text"
           placeholder="MIT"
           :class="{ error: errors.institutionName }"
+          :aria-invalid="!!errors.institutionName || undefined"
+          :aria-describedby="errors.institutionName ? 'err-edu-institution' : undefined"
+          aria-required="true"
           maxlength="255"
         />
-        <span v-if="errors.institutionName" class="field-error">{{ errors.institutionName }}</span>
+        <span v-if="errors.institutionName" id="err-edu-institution" class="field-error" role="alert">{{ errors.institutionName }}</span>
       </div>
       <div class="field">
         <label for="edu-degree">Degree</label>
@@ -42,8 +45,10 @@
           v-model="form.endDate"
           type="date"
           :class="{ error: errors.endDate }"
+          :aria-invalid="!!errors.endDate || undefined"
+          :aria-describedby="errors.endDate ? 'err-edu-end' : undefined"
         />
-        <span v-if="errors.endDate" class="field-error">{{ errors.endDate }}</span>
+        <span v-if="errors.endDate" id="err-edu-end" class="field-error" role="alert">{{ errors.endDate }}</span>
       </div>
     </div>
 
@@ -63,7 +68,7 @@
       <textarea id="edu-desc" v-model="form.description" rows="3" placeholder="Relevant coursework, activities, honours…" />
     </div>
 
-    <div v-if="apiError" class="api-error">{{ apiError }}</div>
+    <div v-if="apiError" class="api-error" role="alert">{{ apiError }}</div>
 
     <div class="form-actions">
       <button type="button" class="btn btn-ghost" @click="$emit('cancel')" :disabled="saving">Cancel</button>

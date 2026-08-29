@@ -2,16 +2,19 @@
   <form class="form" @submit.prevent="handleSubmit" novalidate>
     <div class="form-row">
       <div class="field">
-        <label for="skill-name">Skill *</label>
+        <label for="skill-name">Skill <span aria-hidden="true">*</span></label>
         <input
           id="skill-name"
           v-model="form.name"
           type="text"
           placeholder="TypeScript"
           :class="{ error: errors.name }"
+          :aria-invalid="!!errors.name || undefined"
+          :aria-describedby="errors.name ? 'err-skill-name' : undefined"
+          aria-required="true"
           maxlength="100"
         />
-        <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
+        <span v-if="errors.name" id="err-skill-name" class="field-error" role="alert">{{ errors.name }}</span>
       </div>
       <div class="field">
         <label for="skill-category">Category</label>
@@ -33,7 +36,7 @@
       </div>
     </div>
 
-    <div v-if="apiError" class="api-error">{{ apiError }}</div>
+    <div v-if="apiError" class="api-error" role="alert">{{ apiError }}</div>
 
     <div class="form-actions">
       <button type="button" class="btn btn-ghost" @click="$emit('cancel')" :disabled="saving">Cancel</button>
