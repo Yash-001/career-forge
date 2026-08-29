@@ -1,5 +1,7 @@
 # CareerForge
 
+[![CI](https://github.com/Yash-001/career-forge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yash-001/career-forge/actions/workflows/ci.yml)
+
 An AI-assisted career platform for building professional resumes, tailoring applications to job descriptions, and tracking the full job search lifecycle.
 
 ---
