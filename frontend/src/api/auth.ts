@@ -1,4 +1,5 @@
 import apiClient from './client'
+export type { ApiError } from './errors'
 
 export interface AuthResponse {
   userId: string

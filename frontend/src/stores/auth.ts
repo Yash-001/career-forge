@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as authApi from '@/api/auth'
+import { extractApiError } from '@/api/errors'
 
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem('access_token'))
@@ -37,8 +38,12 @@ export const useAuthStore = defineStore('auth', () => {
       setTokens(data.accessToken, data.refreshToken, data.firstName)
       return true
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { error?: { message?: string } } } }
-      authError.value = err.response?.data?.error?.message ?? 'Login failed. Please try again.'
+      const err = extractApiError(e)
+      if (err.status === 401 || err.code === 'INVALID_CREDENTIALS') {
+        authError.value = 'Incorrect email or password. Please try again.'
+      } else {
+        authError.value = err.message
+      }
       return false
     } finally {
       authLoading.value = false
@@ -53,8 +58,12 @@ export const useAuthStore = defineStore('auth', () => {
       setTokens(data.accessToken, data.refreshToken, data.firstName)
       return true
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { error?: { message?: string } } } }
-      authError.value = err.response?.data?.error?.message ?? 'Registration failed. Please try again.'
+      const err = extractApiError(e)
+      if (err.status === 409 || err.code === 'EMAIL_ALREADY_EXISTS') {
+        authError.value = 'An account with this email already exists. Try signing in instead.'
+      } else {
+        authError.value = err.message
+      }
       return false
     } finally {
       authLoading.value = false

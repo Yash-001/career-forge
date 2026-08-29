@@ -1,4 +1,6 @@
 import apiClient from './client'
+import { extractApiError } from './errors'
+export type { ApiError as BillingApiError } from './errors'
 
 export type SubscriptionTier = 'FREE' | 'PRO'
 export type SubscriptionStatus = 'ACTIVE' | 'INACTIVE' | 'CANCELED' | 'PAST_DUE'
@@ -21,21 +23,6 @@ export interface CheckoutResponse {
   message: string
 }
 
-export interface BillingApiError {
-  status: number
-  code: string
-  message: string
-}
-
-function extractError(err: unknown): BillingApiError {
-  const e = err as { response?: { status?: number; data?: { code?: string; message?: string } } }
-  return {
-    status: e.response?.status ?? 0,
-    code: e.response?.data?.code ?? 'UNKNOWN_ERROR',
-    message: e.response?.data?.message ?? 'An unexpected error occurred.',
-  }
-}
-
 export const billingApi = {
   async getSubscription(): Promise<SubscriptionResponse> {
     const r = await apiClient.get<SubscriptionResponse>('/billing/subscription')
@@ -52,5 +39,5 @@ export const billingApi = {
     return r.data
   },
 
-  extractError,
+  extractError: extractApiError,
 }

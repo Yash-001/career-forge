@@ -111,4 +111,35 @@ describe('ResumeListView', () => {
 
     expect(resumeApi.deleteResume).not.toHaveBeenCalled()
   })
+
+  it('shows error in delete dialog when deleteResume fails', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.deleteResume).mockRejectedValueOnce({})
+    vi.mocked(resumeApi.extractError).mockReturnValueOnce({ status: 500, code: 'ERROR', message: 'Delete failed.' })
+
+    const wrapper = mountView()
+    await flushPromises()
+    useResumeStore().resumes = [sampleResume]
+    await flushPromises()
+
+    await wrapper.findAll('button').find((b) => b.text() === 'Delete')?.trigger('click')
+    await flushPromises()
+    await wrapper.find('.btn-danger').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.dialog-error').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Delete failed.')
+  })
+
+  it('shows retry button on load error', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.listResumes).mockRejectedValueOnce({})
+    vi.mocked(resumeApi.extractError).mockReturnValueOnce({ status: 500, code: 'ERROR', message: 'Load failed.' })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Retry')
+  })
 })

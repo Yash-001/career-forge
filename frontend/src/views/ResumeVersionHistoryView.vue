@@ -6,7 +6,10 @@
       <p v-if="resumeName" class="page-subtitle">{{ resumeName }}</p>
     </div>
 
-    <div v-if="loadError" class="api-error" role="alert">{{ loadError }}</div>
+    <div v-if="loadError" class="api-error" role="alert">
+      {{ loadError }}
+      <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="load">Retry</button>
+    </div>
 
     <div v-else-if="loading" class="skeleton-stack">
       <div v-for="n in 3" :key="n" class="skeleton" style="height: 5rem;" />

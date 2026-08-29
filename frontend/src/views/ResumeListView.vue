@@ -16,7 +16,10 @@
     </div>
 
     <!-- Error -->
-    <div v-else-if="store.error" class="api-error" role="alert">{{ store.error }}</div>
+    <div v-else-if="store.error" class="api-error" role="alert">
+      {{ store.error }}
+      <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="store.loadResumes()">Retry</button>
+    </div>
 
     <!-- Empty state -->
     <div v-else-if="store.resumes.length === 0" class="resume-empty">
@@ -78,8 +81,9 @@
       title="Delete Resume"
       :message="deleteTarget ? `Delete &quot;${deleteTarget.name}&quot;? All versions and content will be permanently removed.` : ''"
       :loading="deleteSaving"
+      :error="deleteError"
       @confirm="executeDelete"
-      @cancel="deleteTarget = null"
+      @cancel="cancelDelete"
     />
   </div>
 </template>
@@ -131,19 +135,27 @@ async function submitRename(resumeId: string) {
 // ── Delete ─────────────────────────────────────────────────────────────────
 const deleteTarget = ref<ResumeSummary | null>(null)
 const deleteSaving = ref(false)
+const deleteError = ref<string | null>(null)
 
 function confirmDelete(resume: ResumeSummary) {
   deleteTarget.value = resume
+  deleteError.value = null
+}
+
+function cancelDelete() {
+  deleteTarget.value = null
+  deleteError.value = null
 }
 
 async function executeDelete() {
   if (!deleteTarget.value) return
   deleteSaving.value = true
+  deleteError.value = null
   try {
     await store.removeResume(deleteTarget.value.id)
     deleteTarget.value = null
-  } catch {
-    // dialog stays open
+  } catch (err) {
+    deleteError.value = resumeApi.extractError(err).message
   } finally {
     deleteSaving.value = false
   }

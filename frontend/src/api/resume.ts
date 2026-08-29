@@ -1,4 +1,6 @@
 import apiClient from './client'
+import { extractApiError } from './errors'
+export type { ApiError } from './errors'
 import type { EmploymentType, ProficiencyLevel } from './profile'
 
 // ── Response types ────────────────────────────────────────────────────────
@@ -119,25 +121,6 @@ export interface ResumeSkillPayload {
   displayOrder: number
 }
 
-// ── Error helper ──────────────────────────────────────────────────────────
-
-export interface ApiError {
-  status: number
-  code: string
-  message: string
-  fieldErrors?: Record<string, string>
-}
-
-function extractError(err: unknown): ApiError {
-  const e = err as { response?: { status?: number; data?: { code?: string; message?: string; fieldErrors?: Record<string, string> } } }
-  return {
-    status: e.response?.status ?? 0,
-    code: e.response?.data?.code ?? 'UNKNOWN_ERROR',
-    message: e.response?.data?.message ?? 'An unexpected error occurred.',
-    fieldErrors: e.response?.data?.fieldErrors,
-  }
-}
-
 // ── API ───────────────────────────────────────────────────────────────────
 
 export const resumeApi = {
@@ -241,5 +224,5 @@ export const resumeApi = {
     return r.data
   },
 
-  extractError,
+  extractError: extractApiError,
 }

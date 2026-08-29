@@ -3,6 +3,7 @@
     <div class="dialog-box">
       <h3 class="dialog-title" :id="'dialog-title-' + title">{{ title }}</h3>
       <p class="dialog-message" :id="'dialog-msg-' + title">{{ message }}</p>
+      <div v-if="error" class="dialog-error" role="alert">{{ error }}</div>
       <div class="dialog-actions">
         <button class="btn btn-ghost" @click="$emit('cancel')" :disabled="loading">Cancel</button>
         <button class="btn btn-danger" @click="$emit('confirm')" :disabled="loading">
@@ -20,6 +21,7 @@ defineProps<{
   title: string
   message: string
   loading?: boolean
+  error?: string | null
 }>()
 defineEmits<{ confirm: []; cancel: [] }>()
 </script>
@@ -51,6 +53,15 @@ defineEmits<{ confirm: []; cancel: [] }>()
   font-size: 0.875rem;
   color: #6b7280;
   margin-bottom: 1.25rem;
+}
+.dialog-error {
+  padding: 0.5rem 0.75rem;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+  margin-bottom: 1rem;
 }
 .dialog-actions {
   display: flex;

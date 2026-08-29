@@ -40,7 +40,10 @@
     </div>
 
     <!-- Error -->
-    <div v-else-if="store.error" class="api-error" role="alert">{{ store.error }}</div>
+    <div v-else-if="store.error" class="api-error" role="alert">
+      {{ store.error }}
+      <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="store.loadApplications()">Retry</button>
+    </div>
 
     <!-- Empty state (no applications at all) -->
     <div v-else-if="store.applications.length === 0" class="app-empty">
@@ -119,8 +122,9 @@
       title="Delete Application"
       :message="deleteTarget ? `Delete the application for &quot;${deleteTarget.jobTitle}&quot; at ${deleteTarget.companyName}? This cannot be undone.` : ''"
       :loading="deleteSaving"
+      :error="deleteError"
       @confirm="executeDelete"
-      @cancel="deleteTarget = null"
+      @cancel="cancelDelete"
     />
   </div>
 </template>
@@ -204,19 +208,27 @@ async function handleSaved(data: {
 // ── Delete ─────────────────────────────────────────────────────────────────
 const deleteTarget = ref<ApplicationResponse | null>(null)
 const deleteSaving = ref(false)
+const deleteError = ref<string | null>(null)
 
 function confirmDelete(app: ApplicationResponse) {
   deleteTarget.value = app
+  deleteError.value = null
+}
+
+function cancelDelete() {
+  deleteTarget.value = null
+  deleteError.value = null
 }
 
 async function executeDelete() {
   if (!deleteTarget.value) return
   deleteSaving.value = true
+  deleteError.value = null
   try {
     await store.removeApplication(deleteTarget.value.id)
     deleteTarget.value = null
-  } catch {
-    // dialog stays open
+  } catch (err) {
+    deleteError.value = applicationApi.extractError(err).message
   } finally {
     deleteSaving.value = false
   }

@@ -1,4 +1,6 @@
 import apiClient from './client'
+import { extractApiError } from './errors'
+export type { ApiError } from './errors'
 
 export type ApplicationStatus = 'APPLIED' | 'INTERVIEW' | 'OFFER' | 'REJECTED'
 
@@ -34,23 +36,6 @@ export interface UpdateApplicationPayload {
   resumeVersionId?: string | null
 }
 
-export interface ApiError {
-  status: number
-  code: string
-  message: string
-  fieldErrors?: Record<string, string>
-}
-
-function extractError(err: unknown): ApiError {
-  const e = err as { response?: { status?: number; data?: { code?: string; message?: string; fieldErrors?: Record<string, string> } } }
-  return {
-    status: e.response?.status ?? 0,
-    code: e.response?.data?.code ?? 'UNKNOWN_ERROR',
-    message: e.response?.data?.message ?? 'An unexpected error occurred.',
-    fieldErrors: e.response?.data?.fieldErrors,
-  }
-}
-
 export const applicationApi = {
   async list(): Promise<ApplicationResponse[]> {
     const r = await apiClient.get<ApplicationResponse[]>('/applications')
@@ -76,5 +61,5 @@ export const applicationApi = {
     await apiClient.delete(`/applications/${id}`)
   },
 
-  extractError,
+  extractError: extractApiError,
 }

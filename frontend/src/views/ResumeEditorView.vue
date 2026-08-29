@@ -20,6 +20,7 @@
           <span v-if="branching" class="spinner" aria-hidden="true" />
           {{ branching ? 'Branching…' : 'New Version' }}
         </button>
+        <div v-if="branchError" class="export-error" role="alert">{{ branchError }}</div>
         <button
           class="btn btn-ghost btn-sm"
           :disabled="exporting || !currentVersion"
@@ -33,8 +34,8 @@
         </button>
         <div v-if="exportError" class="export-error" role="alert" data-testid="export-error">
           <template v-if="exportLimitReached">
-            Monthly PDF export limit reached (3/3).
-            <span class="export-limit-hint">Upgrade to Pro for unlimited exports.</span>
+            You've reached your 3 monthly PDF exports.
+            <RouterLink to="/billing" class="export-limit-hint">Upgrade to Pro for unlimited exports.</RouterLink>
           </template>
           <template v-else>{{ exportError }}</template>
         </div>
@@ -63,7 +64,10 @@
 
     <!-- Main content -->
     <main class="editor-main">
-      <div v-if="loadError" class="api-error" role="alert">{{ loadError }}</div>
+      <div v-if="loadError" class="api-error" role="alert">
+        {{ loadError }}
+        <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="load">Retry</button>
+      </div>
 
       <div v-else-if="loading" class="skeleton-stack">
         <div class="skeleton" style="height: 2rem; width: 40%;" />
@@ -239,6 +243,7 @@ const currentVersion = ref<ResumeVersion | null>(null)
 const loading = ref(true)
 const loadError = ref<string | null>(null)
 const branching = ref(false)
+const branchError = ref<string | null>(null)
 const exporting = ref(false)
 const exportError = ref<string | null>(null)
 const exportLimitReached = ref(false)
@@ -307,12 +312,13 @@ async function saveMeta() {
 
 async function createNewVersion() {
   branching.value = true
+  branchError.value = null
   try {
     const newVersion = await resumeApi.createVersion(resumeId)
     currentVersion.value = newVersion
     activeSection.value = 'summary'
   } catch (err) {
-    loadError.value = resumeApi.extractError(err).message
+    branchError.value = resumeApi.extractError(err).message
   } finally {
     branching.value = false
   }

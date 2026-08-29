@@ -1,4 +1,5 @@
 import apiClient from './client'
+import { extractApiError } from './errors'
 
 export interface DashboardProfile {
   exists: boolean
@@ -93,12 +94,7 @@ export interface ActivityEntry {
 }
 
 function extractError(err: unknown): { message: string } {
-  const e = err as { response?: { data?: { message?: string; error?: { message?: string } } } }
-  const msg =
-    e?.response?.data?.error?.message ??
-    e?.response?.data?.message ??
-    'Something went wrong. Please try again.'
-  return { message: msg }
+  return { message: extractApiError(err).message }
 }
 
 export const dashboardApi = {

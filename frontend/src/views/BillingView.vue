@@ -16,6 +16,7 @@
     <!-- Error -->
     <div v-else-if="store.error && !store.subscription" class="api-error" role="alert" data-testid="billing-error">
       {{ store.error }}
+      <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="store.loadSubscription()">Retry</button>
     </div>
 
     <template v-else-if="store.subscription">

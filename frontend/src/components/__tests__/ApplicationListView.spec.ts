@@ -223,7 +223,6 @@ describe('ApplicationListView', () => {
     await wrapper.find('button.btn-primary').trigger('click')
     await wrapper.vm.$nextTick()
 
-    // Fill form
     await wrapper.find('#app-company').setValue('NewCo')
     await wrapper.find('#app-role').setValue('Dev')
     await wrapper.find('#app-date').setValue('2024-07-01')
@@ -347,6 +346,25 @@ describe('ApplicationListView', () => {
     expect(applicationApi.remove).not.toHaveBeenCalled()
   })
 
+  it('shows error in delete dialog when removeApplication fails', async () => {
+    const { applicationApi } = await import('@/api/application')
+    vi.mocked(applicationApi.remove).mockRejectedValueOnce({})
+    vi.mocked(applicationApi.extractError).mockReturnValueOnce({ status: 500, code: 'ERROR', message: 'Delete failed.' })
+
+    const wrapper = mountView()
+    await flushPromises()
+    useApplicationStore().applications = [makeApp()]
+    await wrapper.vm.$nextTick()
+
+    await wrapper.findAll('button').find((b) => b.text() === 'Delete')?.trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('.btn-danger').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.dialog-error').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Delete failed.')
+  })
+
   // API error
   it('shows API error when load fails', async () => {
     const { applicationApi } = await import('@/api/application')
@@ -381,13 +399,27 @@ describe('ApplicationListView', () => {
     expect(wrapper.find('.dialog-box').exists()).toBe(true)
   })
 
-  // Unauthorized handling — client.ts redirects on 401; store surfaces error message
   it('shows error state when store has an error', async () => {
     const wrapper = mountView()
     await flushPromises()
     useApplicationStore().error = 'Unauthorized.'
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.api-error').exists()).toBe(true)
+  })
+
+  it('shows retry button on load error', async () => {
+    const { applicationApi } = await import('@/api/application')
+    vi.mocked(applicationApi.list).mockRejectedValueOnce({})
+    vi.mocked(applicationApi.extractError).mockReturnValueOnce({ status: 500, code: 'ERROR', message: 'Load failed.' })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    useApplicationStore().error = 'Load failed.'
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[role="alert"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Retry')
   })
 
   // Resume version selection

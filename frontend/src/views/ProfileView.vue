@@ -13,7 +13,10 @@
     </div>
 
     <!-- Load error -->
-    <div v-else-if="store.error" class="api-error" role="alert">{{ store.error }}</div>
+    <div v-else-if="store.error" class="api-error" role="alert">
+      {{ store.error }}
+      <button class="btn btn-ghost btn-sm" style="margin-left:0.75rem" type="button" @click="store.loadAll()">Retry</button>
+    </div>
 
     <template v-else>
       <!-- ── Personal Info ─────────────────────────────────────────────── -->
@@ -224,8 +227,9 @@
       :title="deleteTitle"
       :message="deleteMessage"
       :loading="deleteSaving"
+      :error="deleteError"
       @confirm="executeDelete"
-      @cancel="deleteTarget = null"
+      @cancel="cancelDelete"
     />
   </div>
 </template>
@@ -507,6 +511,7 @@ type DeleteTarget =
 
 const deleteTarget = ref<DeleteTarget | null>(null)
 const deleteSaving = ref(false)
+const deleteError = ref<string | null>(null)
 
 const deleteTitle = ref('')
 const deleteMessage = ref('')
@@ -515,31 +520,40 @@ function confirmDeleteExp(exp: WorkExperience) {
   deleteTarget.value = { type: 'experience', item: exp }
   deleteTitle.value = 'Delete Work Experience'
   deleteMessage.value = `Remove "${exp.jobTitle} at ${exp.companyName}"? This cannot be undone.`
+  deleteError.value = null
 }
 
 function confirmDeleteEdu(edu: Education) {
   deleteTarget.value = { type: 'education', item: edu }
   deleteTitle.value = 'Delete Education'
   deleteMessage.value = `Remove "${edu.institutionName}"? This cannot be undone.`
+  deleteError.value = null
 }
 
 function confirmDeleteSkill(skill: Skill) {
   deleteTarget.value = { type: 'skill', item: skill }
   deleteTitle.value = 'Delete Skill'
   deleteMessage.value = `Remove "${skill.name}"? This cannot be undone.`
+  deleteError.value = null
+}
+
+function cancelDelete() {
+  deleteTarget.value = null
+  deleteError.value = null
 }
 
 async function executeDelete() {
   if (!deleteTarget.value) return
   deleteSaving.value = true
+  deleteError.value = null
   try {
     const t = deleteTarget.value
     if (t.type === 'experience') await store.removeExperience(t.item.id)
     else if (t.type === 'education') await store.removeEducation(t.item.id)
     else await store.removeSkill(t.item.id)
     deleteTarget.value = null
-  } catch {
-    // dialog stays open; user can retry
+  } catch (err) {
+    deleteError.value = profileApi.extractError(err).message
   } finally {
     deleteSaving.value = false
   }

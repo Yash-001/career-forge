@@ -468,7 +468,7 @@ describe('ResumeEditorView — PDF Export', () => {
 
     const errorEl = wrapper.find('[data-testid="export-error"]')
     expect(errorEl.exists()).toBe(true)
-    expect(errorEl.text()).toContain('Monthly PDF export limit reached')
+    expect(errorEl.text()).toContain("You've reached your 3 monthly PDF exports")
     expect(errorEl.text()).toContain('Upgrade to Pro')
   })
 
@@ -498,5 +498,32 @@ describe('ResumeEditorView — PDF Export', () => {
 
     await btn.trigger('click')
     expect(btn.attributes('aria-busy')).toBe('true')
+  })
+})
+
+// ── Branch error ──────────────────────────────────────────────────────────────
+
+describe('ResumeEditorView — New Version error', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  it('shows branch error in sidebar (not load error) when createVersion fails', async () => {
+    const { resumeApi } = await import('@/api/resume')
+    vi.mocked(resumeApi.createVersion).mockRejectedValueOnce({})
+    vi.mocked(resumeApi.extractError).mockReturnValueOnce({ status: 500, code: 'ERROR', message: 'Branch failed.' })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const newVersionBtn = wrapper.findAll('button').find((b) => b.text() === 'New Version')
+    await newVersionBtn?.trigger('click')
+    await flushPromises()
+
+    // Error should appear in sidebar version-box, not as the main load error
+    expect(wrapper.find('.export-error').text()).toContain('Branch failed.')
+    // Main content should still be visible (not replaced by load error)
+    expect(wrapper.find('#ver-title').exists()).toBe(true)
   })
 })

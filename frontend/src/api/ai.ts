@@ -1,4 +1,6 @@
 import apiClient from './client'
+import { extractApiError } from './errors'
+export type { ApiError } from './errors'
 
 // ── Response types ────────────────────────────────────────────────────────
 
@@ -33,23 +35,6 @@ export interface AcceptedSuggestion {
 
 export interface AcceptTailoringPayload {
   acceptedSuggestions: AcceptedSuggestion[]
-}
-
-// ── Error helper ──────────────────────────────────────────────────────────
-
-export interface ApiError {
-  status: number
-  code: string
-  message: string
-}
-
-function extractError(err: unknown): ApiError {
-  const e = err as { response?: { status?: number; data?: { code?: string; message?: string } } }
-  return {
-    status: e.response?.status ?? 0,
-    code: e.response?.data?.code ?? 'UNKNOWN_ERROR',
-    message: e.response?.data?.message ?? 'An unexpected error occurred.',
-  }
 }
 
 // ── API ───────────────────────────────────────────────────────────────────
@@ -91,5 +76,5 @@ export const aiApi = {
     return r.data
   },
 
-  extractError,
+  extractError: extractApiError,
 }
