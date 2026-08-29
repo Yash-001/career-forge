@@ -52,6 +52,7 @@ public class SecurityConfig {
                     "/api/v1/auth/**",
                     "/api/v1/health",
                     "/api/v1/webhooks/stripe",
+                    "/api/v1/demo/login",
                     "/actuator/health"
                 ).permitAll()
                 .anyRequest().authenticated()

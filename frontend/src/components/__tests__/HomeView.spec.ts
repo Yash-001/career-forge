@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import HomeView from '@/views/HomeView.vue'
 
@@ -11,6 +11,10 @@ vi.mock('vue-router', () => ({
 vi.mock('@/api/auth', () => ({
   login: vi.fn<() => void>(),
   register: vi.fn<() => void>(),
+}))
+
+vi.mock('@/api/demo', () => ({
+  demoLogin: vi.fn<() => Promise<null>>(),
 }))
 
 function mountHome() {
@@ -39,9 +43,10 @@ describe('HomeView', () => {
     expect(wrapper.text()).toContain('Start for free')
   })
 
-  it('renders secondary CTA', () => {
+  it('renders Try Demo button', () => {
     const wrapper = mountHome()
-    expect(wrapper.text()).toContain('Explore demo')
+    expect(wrapper.find('[data-testid="try-demo-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="try-demo-btn"]').text()).toContain('Try demo')
   })
 
   it('renders all seven feature cards', () => {
@@ -124,5 +129,55 @@ describe('HomeView', () => {
 
     mount(HomeView, { global: { plugins: [pinia] } })
     expect(replaceMock).toHaveBeenCalledWith('/dashboard')
+  })
+
+  it('demo button — server returns null (demo disabled) — shows error message', async () => {
+    const { demoLogin } = await import('@/api/demo')
+    vi.mocked(demoLogin).mockResolvedValue(null)
+
+    const wrapper = mountHome()
+    await wrapper.find('[data-testid="try-demo-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="demo-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="demo-error"]').text()).toContain('not enabled')
+  })
+
+  it('demo button — network error — shows error message', async () => {
+    const { demoLogin } = await import('@/api/demo')
+    vi.mocked(demoLogin).mockRejectedValue(new Error('Network error'))
+
+    const wrapper = mountHome()
+    await wrapper.find('[data-testid="try-demo-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="demo-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="demo-error"]').text()).toContain('connect')
+  })
+
+  it('demo button — success — stores tokens and redirects to dashboard', async () => {
+    const { useRouter } = await import('vue-router')
+    const replaceMock = vi.fn<() => void>()
+    vi.mocked(useRouter).mockReturnValue({ replace: replaceMock } as unknown as ReturnType<typeof useRouter>)
+
+    const { demoLogin } = await import('@/api/demo')
+    vi.mocked(demoLogin).mockResolvedValue({
+      userId: 'demo-uuid',
+      email: 'demo@careerforge.dev',
+      firstName: 'Alex',
+      lastName: 'Rivera',
+      subscriptionTier: 'FREE',
+      accessToken: 'demo-access-token',
+      refreshToken: 'demo-refresh-token',
+    })
+
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(HomeView, { global: { plugins: [pinia] } })
+    await wrapper.find('[data-testid="try-demo-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(replaceMock).toHaveBeenCalledWith('/dashboard')
+    expect(wrapper.find('[data-testid="demo-error"]').exists()).toBe(false)
   })
 })

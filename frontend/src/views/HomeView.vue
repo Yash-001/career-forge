@@ -16,8 +16,19 @@
         </p>
         <div class="hero__actions">
           <RouterLink to="/register" class="btn btn-primary hero__cta">Start for free</RouterLink>
-          <RouterLink to="/login" class="btn btn-ghost hero__cta">Explore demo</RouterLink>
+          <button
+            class="btn btn-ghost hero__cta"
+            type="button"
+            :disabled="demoLoading"
+            :aria-busy="demoLoading"
+            data-testid="try-demo-btn"
+            @click="handleDemoLogin"
+          >
+            <span v-if="demoLoading" class="spinner" aria-hidden="true" />
+            {{ demoLoading ? 'Loading demo…' : 'Try demo' }}
+          </button>
         </div>
+        <p v-if="demoError" class="hero__demo-error" role="alert" data-testid="demo-error">{{ demoError }}</p>
         <p class="hero__note">Free tier: 2 resumes · 3 PDF exports/month · no credit card required.</p>
       </div>
     </section>
@@ -147,14 +158,37 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { demoLogin } from '@/api/demo'
 
 const auth = useAuthStore()
 const router = useRouter()
 
 if (auth.isAuthenticated) {
   router.replace('/dashboard')
+}
+
+const demoLoading = ref(false)
+const demoError = ref<string | null>(null)
+
+async function handleDemoLogin() {
+  demoLoading.value = true
+  demoError.value = null
+  try {
+    const result = await demoLogin()
+    if (!result) {
+      demoError.value = 'Demo mode is not enabled on this server.'
+      return
+    }
+    auth.setTokens(result.accessToken, result.refreshToken, result.firstName)
+    router.replace('/dashboard')
+  } catch {
+    demoError.value = 'Could not connect to the demo server. Please try again.'
+  } finally {
+    demoLoading.value = false
+  }
 }
 
 const features = [
@@ -324,6 +358,12 @@ const techItems = [
 .hero__note {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
+}
+
+.hero__demo-error {
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+  margin-bottom: 0.25rem;
 }
 
 /* ── Shared section layout ─────────────────────────────────────────────── */

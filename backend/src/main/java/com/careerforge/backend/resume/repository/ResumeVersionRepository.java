@@ -33,4 +33,6 @@ public interface ResumeVersionRepository extends JpaRepository<ResumeVersion, UU
     long countByResumeUserId(@Param("userId") UUID userId);
 
     List<ResumeVersion> findTop5ByResumeUserIdOrderByCreatedAtDesc(UUID userId);
+
+    Optional<ResumeVersion> findTopByResumeIdOrderByVersionNumberDesc(UUID resumeId);
 }
