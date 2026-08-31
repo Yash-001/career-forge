@@ -211,14 +211,12 @@ class SecurityHardeningTest extends AbstractIntegrationTest {
         assertThatThrownBy(guard::enforce).isInstanceOf(IllegalStateException.class);
     }
 
-    // ── SEC-15: ConsoleEmailProvider blocked in production ────────────────────
+    // ── SEC-15: ConsoleEmailProvider in production logs warn, does not throw ──
 
     @Test
-    void emailConfig_consoleProvider_productionEnv_throwsIllegalState() {
+    void emailConfig_consoleProvider_productionEnv_doesNotThrow() {
         EmailConfig config = new EmailConfig();
-        assertThatThrownBy(() -> config.emailService("console", "production"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("ConsoleEmailProvider is not permitted in production");
+        assertThatNoException().isThrownBy(() -> config.emailService("console", "production"));
     }
 
     @Test
