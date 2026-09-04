@@ -30,4 +30,4 @@ USER careerforge
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xmx400m", "-jar", "app.jar"]
